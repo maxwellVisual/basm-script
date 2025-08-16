@@ -1,0 +1,11 @@
+bscp.hpp
+bscp.tab.cpp
+stack.hh
+bscp
+bscp.yy.cpp
+
+*.o
+*.a
+*.so
+
+.vscode/

@@ -3,6 +3,7 @@ bscp.tab.cpp
 stack.hh
 bscp
 bscp.yy.cpp
+bscp.yy.hpp
 
 *.o
 *.a

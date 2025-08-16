@@ -10,6 +10,8 @@
 
 #include "lex.hpp"
 
+extern yyFlexLexer* lexer;
+
 const char *argp_program_version = "bscp 1.0";
 const char *argp_program_bug_address = "<bug@example.com>";
 static char doc[] = "bscp - A simple expression language interpreter";
@@ -56,8 +58,17 @@ int execute_file(const char *filename) {
         return 1;
     }
 
-    yyFlexLexer lexer = yyFlexLexer(&file);
+
+    if(lexer != nullptr){
+        delete lexer;
+    }
+    lexer = new yyFlexLexer(&file);
+    
     int result = yy::parser()();
+    
+    file.close();
+    delete lexer;
+    lexer = nullptr;
 
     return result;
 }
@@ -66,11 +77,15 @@ int repl_mode() {
     printf("bscp REPL (press Ctrl+D to exit)\n");
 
     char line[1024];
+    if(lexer != nullptr){
+        delete lexer;
+    }
     while (printf("> ") && fgets(line, sizeof(line), stdin)) {
         if (strlen(line) == 1 && line[0] == '\n') continue;
         
         std::istringstream yyin(line, std::ios::in);
-        yyFlexLexer lexer = yyFlexLexer(&yyin);
+
+        lexer = new yyFlexLexer(&yyin);
 
         // yyin = fmemopen(line, strlen(line), "r");
         int result = yy::parser()();
@@ -78,7 +93,9 @@ int repl_mode() {
         if (result != 0) {
             fprintf(stderr, "Error parsing input\n");
         }
+        delete lexer;
     }
+    lexer = nullptr;
     
     printf("\n");
     return 0;

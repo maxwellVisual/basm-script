@@ -29,6 +29,6 @@ bscp: $(OBJS)
 
 # 清理生成的文件
 clean:
-	rm -f $(OBJS) bscp.hpp bscp.tab.cpp libbscp.a stack.hh bscp.yy.cc bscp
+	rm -f $(OBJS) bscp.hpp bscp.tab.cpp libbscp.a stack.hh bscp.yy.cc bscp bscp.yy.cpp bscp.yy.hpp
 
 .PHONY: all clean

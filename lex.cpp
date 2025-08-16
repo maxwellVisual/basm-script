@@ -1,34 +1,25 @@
 #include "lex.hpp"
 
 #include <FlexLexer.h>
-
-/* Flex相关类型定义 */
-struct yy_buffer_state;
-typedef struct yy_buffer_state* YY_BUFFER_STATE;
-
-/* Flex生成的函数前向声明 */
-extern int yylex(void);
-extern YY_BUFFER_STATE yy_scan_bytes(const char* bytes, int len);
-extern void yy_switch_to_buffer(YY_BUFFER_STATE buffer);
-extern void yy_delete_buffer(YY_BUFFER_STATE buffer);
-extern char* yytext;
-extern int yyleng;
+#include "bscp.hpp"
 
 yyFlexLexer* lexer = nullptr;
 
 /* 全局变量，用于存储当前识别的token */
-struct lex_token current_token = { lex_unknown, 0, NULL };
-
-// std::istream yyin;
+struct lex_token current_token = { yy::parser::token_kind_type::lex_unknown, 0, NULL };
 
 /**
- * 获取下一个词法单元
+ * 获取下一个词法单元，调用者需要释放 current_token
  * 
  * @param buf 用于存储词法单元的缓冲区
  * @return 1表示成功，0表示遇到错误或文件结束
  */
 int lex_next(struct lex_token* buf) {
+    if(lexer == nullptr){
+        return 0;
+    }
     int ret = lexer->yylex();
+    printf("token: %d '%s'\n", current_token.type, current_token.raw);
     if(buf == NULL){
         return ret;
     }

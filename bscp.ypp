@@ -82,11 +82,12 @@ public:
 class Field
 {
 public:
+    bscp_value* parent;
     std::string name;
     bscp_value* value;
     bool is_tmp;
-    Field(): value(nullptr), is_tmp(false) {}
-    Field(bscp_value& value, bool is_tmp = true): value(&value), is_tmp(is_tmp){}
+    Field(bscp_value* parent = nullptr): parent(parent), value(nullptr), is_tmp(false) {}
+    Field(bscp_value& value, bool is_tmp = true, bscp_value* parent = nullptr): parent(parent), value(&value), is_tmp(is_tmp){}
 };
 class bscp_obj: public bscp_value
 {
@@ -111,10 +112,11 @@ extern struct lex_token token;
 %define parse.error verbose
 
 %union {
-    lex_token_type lex_token;
+    int lex_token;
     bscp_value* value;
     bscp_obj* obj_value;
     bscp_num* num_value;
+    bscp_null* null_value;
 
     std::string* word;
     std::string* punct;
@@ -144,6 +146,7 @@ extern struct lex_token token;
 %token <lex_token> lex_eol
 %token <lex_token> lex_assembly
 %token <lex_token> lex_unknown
+/* %token <lex_token> lex_eof */
 
 /* %token <word> lex_word
 %token <num_value> lex_number
@@ -169,7 +172,7 @@ extern struct lex_token token;
 %type <num_value> NUMBER
 %type <obj_value> STRING
 %type <word> WORD
-
+%type <null_value> FIELD
 
 %%
 start: expr;
@@ -177,6 +180,7 @@ start: expr;
 expr
     : NUMBER { $$ = $1; }
     | STRING { $$ = $1; }
+    | FIELD { $$ = $1; }
     | '(' expr ')' { $$ = $2; }
     | expr '.' expr {
         require_true(dynamic_cast<bscp_obj*>($1), "Left operand of '.' must be an object");
@@ -412,9 +416,9 @@ expr
 
 NUMBER: lex_number {
     std::string raw(current_token.raw, current_token.raw_size);
-    // std::cout<<raw<<std::endl;
     $$ = new bscp_num(nullptr, raw);
 };
+FIELD: WORD { $$ = new bscp_null(nullptr); };
 STRING: lex_string {
     bscp_obj* obj = new bscp_obj(nullptr);
     std::string raw(current_token.raw, current_token.raw_size);
@@ -425,7 +429,6 @@ STRING: lex_string {
     $$ = obj;
 }
 WORD: lex_word {
-    puts("here0");
     $$ = new std::string(current_token.raw, current_token.raw_size);
 }
 %%
@@ -439,7 +442,7 @@ int yylex(yy::parser::value_type* value) {
     lex_next(NULL);
     return current_token.type;
 
-    switch(current_token.type) {
+    /* switch(current_token.type) {
         case lex_word:
             value->word = new std::string(current_token.raw, current_token.raw_size);
             return lex_word;
@@ -472,5 +475,5 @@ int yylex(yy::parser::value_type* value) {
         default:
             fprintf(stderr, "Unknown token type: %d\n", current_token.type);
             return -1;
-    }
+    } */
 }

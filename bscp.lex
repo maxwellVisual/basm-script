@@ -1,5 +1,6 @@
 %{
 #include "lex.hpp"
+#include "bscp.hpp"
 
 /* 声明会使用到的外部变量和函数 */
 extern char* yytext;
@@ -18,18 +19,18 @@ size_t line_count = 0;
     } while(0)
 
 /* 设置不同类型token的辅助宏 */
-#define WORD_TOKEN()            SET_TOKEN(lex_word)
-#define NUMBER_TOKEN()          SET_TOKEN(lex_number)
-#define STRING_TOKEN()          SET_TOKEN(lex_string) 
-#define PUNCTUATION_TOKEN()     SET_TOKEN(lex_punctuation)
-#define EOL_TOKEN()             SET_TOKEN(lex_eol)
-#define ASSEMBLY_TOKEN()        SET_TOKEN(lex_assembly)
-#define UNKNOWN_TOKEN()         SET_TOKEN(lex_unknown)
+#define WORD_TOKEN()            SET_TOKEN(yy::parser::token_kind_type::lex_word)
+#define NUMBER_TOKEN()          SET_TOKEN(yy::parser::token_kind_type::lex_number)
+#define STRING_TOKEN()          SET_TOKEN(yy::parser::token_kind_type::lex_string) 
+#define PUNCTUATION_TOKEN()     SET_TOKEN(yy::parser::token_kind_type::lex_punctuation)
+#define EOL_TOKEN()             SET_TOKEN(yy::parser::token_kind_type::lex_eol)
+#define ASSEMBLY_TOKEN()        SET_TOKEN(yy::parser::token_kind_type::lex_assembly)
+#define UNKNOWN_TOKEN()         SET_TOKEN(yy::parser::token_kind_type::lex_unknown)
 
 /* EOF的特殊处理 */
 #define EOF_TOKEN() \
     do { \
-        current_token.type = lex_eof; \
+        current_token.type = yy::parser::token_kind_type::YYEOF; \
         current_token.raw = NULL; \
         current_token.raw_size = 0; \
         return 1; \
@@ -71,7 +72,7 @@ FMT_CHAR    (\\\')|(\\\")|(\\\?)|(\\\\)|(\\a)|(\\b)|(\\f)|(\\n)|(\\r)|(\\t)|(\\v
  /* 处理换行符作为EOL标记 */
 {NEWLINE}   {
     line_count++;
-    EOL_TOKEN(); 
+    // EOL_TOKEN(); 
 }
 
  /* 标识符 */
@@ -173,6 +174,6 @@ FMT_CHAR    (\\\')|(\\\")|(\\\?)|(\\\\)|(\\a)|(\\b)|(\\f)|(\\n)|(\\r)|(\\t)|(\\v
 .           { UNKNOWN_TOKEN(); }
 
  /* 处理文件结束 */
-<<EOF>>     { EOF_TOKEN(); }
+ <<EOF>>     { EOF_TOKEN(); }
 
 %%

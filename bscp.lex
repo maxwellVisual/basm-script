@@ -108,64 +108,64 @@ FMT_CHAR    (\\\')|(\\\")|(\\\?)|(\\\\)|(\\a)|(\\b)|(\\f)|(\\n)|(\\r)|(\\t)|(\\v
   * 为提高可读性，按照类别分组
   */
  /* 算术运算符 */
-"+"         { PUNCTUATION_TOKEN(); }
-"-"         { PUNCTUATION_TOKEN(); }
-"*"         { PUNCTUATION_TOKEN(); }
-"/"         { PUNCTUATION_TOKEN(); }
-"%"         { PUNCTUATION_TOKEN(); }
-"++"        { PUNCTUATION_TOKEN(); }
-"--"        { PUNCTUATION_TOKEN(); }
+"+"         { SET_TOKEN(yy::parser::token_kind_type::PLUS); }
+"-"         { SET_TOKEN(yy::parser::token_kind_type::MINUS); }
+"*"         { SET_TOKEN(yy::parser::token_kind_type::STAR); }
+"/"         { SET_TOKEN(yy::parser::token_kind_type::SLASH); }
+"%"         { SET_TOKEN(yy::parser::token_kind_type::PERCENT); }
+"++"        { SET_TOKEN(yy::parser::token_kind_type::INCREMENT); }
+"--"        { SET_TOKEN(yy::parser::token_kind_type::DECREMENT); }
 
  /* 赋值运算符 */
-"="         { PUNCTUATION_TOKEN(); }
-"+="        { PUNCTUATION_TOKEN(); }
-"-="        { PUNCTUATION_TOKEN(); }
-"*="        { PUNCTUATION_TOKEN(); }
-"/="        { PUNCTUATION_TOKEN(); }
-"%="        { PUNCTUATION_TOKEN(); }
-"&="        { PUNCTUATION_TOKEN(); }
-"|="        { PUNCTUATION_TOKEN(); }
-"^="        { PUNCTUATION_TOKEN(); }
-"<<="       { PUNCTUATION_TOKEN(); }
-">>="       { PUNCTUATION_TOKEN(); }
+"="         { SET_TOKEN(yy::parser::token_kind_type::EQUALS); }
+"+="        { SET_TOKEN(yy::parser::token_kind_type::PLUS_EQ); }
+"-="        { SET_TOKEN(yy::parser::token_kind_type::MINUS_EQ); }
+"*="        { SET_TOKEN(yy::parser::token_kind_type::STAR_EQ); }
+"/="        { SET_TOKEN(yy::parser::token_kind_type::SLASH_EQ); }
+"%="        { SET_TOKEN(yy::parser::token_kind_type::PERCENT_EQ); }
+"&="        { SET_TOKEN(yy::parser::token_kind_type::AMPERSAND_EQ); }
+"|="        { SET_TOKEN(yy::parser::token_kind_type::PIPE_EQ); }
+"^="        { SET_TOKEN(yy::parser::token_kind_type::CARET_EQ); }
+"<<="       { SET_TOKEN(yy::parser::token_kind_type::SHIFT_LEFT_EQ); }
+">>="       { SET_TOKEN(yy::parser::token_kind_type::SHIFT_RIGHT_EQ); }
 
  /* 比较运算符 */
-"=="        { PUNCTUATION_TOKEN(); }
-"!="        { PUNCTUATION_TOKEN(); }
-">"         { PUNCTUATION_TOKEN(); }
-"<"         { PUNCTUATION_TOKEN(); }
-">="        { PUNCTUATION_TOKEN(); }
-"<="        { PUNCTUATION_TOKEN(); }
+"=="        { SET_TOKEN(yy::parser::token_kind_type::EQUAL_TO); }
+"!="        { SET_TOKEN(yy::parser::token_kind_type::NOT_EQUAL_TO); }
+">"         { SET_TOKEN(yy::parser::token_kind_type::GREATER); }
+"<"         { SET_TOKEN(yy::parser::token_kind_type::LESS); }
+">="        { SET_TOKEN(yy::parser::token_kind_type::GREATER_EQ); }
+"<="        { SET_TOKEN(yy::parser::token_kind_type::LESS_EQ); }
 
  /* 逻辑运算符 */
-"&&"        { PUNCTUATION_TOKEN(); }
-"||"        { PUNCTUATION_TOKEN(); }
-"!"         { PUNCTUATION_TOKEN(); }
+"&&"        { SET_TOKEN(yy::parser::token_kind_type::LOGIC_AND); }
+"||"        { SET_TOKEN(yy::parser::token_kind_type::LOGIC_OR); }
+"!"         { SET_TOKEN(yy::parser::token_kind_type::UNARY); }
 
  /* 位运算符 */
-"&"         { PUNCTUATION_TOKEN(); }
-"|"         { PUNCTUATION_TOKEN(); }
-"^"         { PUNCTUATION_TOKEN(); }
-"~"         { PUNCTUATION_TOKEN(); }
-"<<"        { PUNCTUATION_TOKEN(); }
-">>"        { PUNCTUATION_TOKEN(); }
+"&"         { SET_TOKEN(yy::parser::token_kind_type::AMPERSAND); }
+"|"         { SET_TOKEN(yy::parser::token_kind_type::BOR); }
+"^"         { SET_TOKEN(yy::parser::token_kind_type::XOR); }
+"~"         { SET_TOKEN(yy::parser::token_kind_type::BNOT); }
+"<<"        { SET_TOKEN(yy::parser::token_kind_type::SHL); }
+">>"        { SET_TOKEN(yy::parser::token_kind_type::SHR); }
 
  /* 特殊符号和分隔符 */
-"->"        { PUNCTUATION_TOKEN(); }
-"."         { PUNCTUATION_TOKEN(); }
-","         { PUNCTUATION_TOKEN(); }
-";"         { PUNCTUATION_TOKEN(); }
-":"         { PUNCTUATION_TOKEN(); }
-"?"         { PUNCTUATION_TOKEN(); }
-"("         { PUNCTUATION_TOKEN(); }
-")"         { PUNCTUATION_TOKEN(); }
-"["         { PUNCTUATION_TOKEN(); }
-"]"         { PUNCTUATION_TOKEN(); }
-"{"         { PUNCTUATION_TOKEN(); }
-"}"         { PUNCTUATION_TOKEN(); }
+ /* "->"        { SET_TOKEN(yy::parser::token_kind_type::ARROW); } */
+"."         { SET_TOKEN(yy::parser::token_kind_type::DOT); }
+","         { SET_TOKEN(yy::parser::token_kind_type::COMMA); }
+";"         { SET_TOKEN(yy::parser::token_kind_type::SEMICOLON); }
+":"         { SET_TOKEN(yy::parser::token_kind_type::COLON); }
+"?"         { SET_TOKEN(yy::parser::token_kind_type::QUESTION_MARK); }
+"("         { SET_TOKEN(yy::parser::token_kind_type::LPAREN); }
+")"         { SET_TOKEN(yy::parser::token_kind_type::RPAREN); }
+"["         { SET_TOKEN(yy::parser::token_kind_type::LBRACKET); }
+"]"         { SET_TOKEN(yy::parser::token_kind_type::RBRACKET); }
+"{"         { SET_TOKEN(yy::parser::token_kind_type::LBRACE); }
+"}"         { SET_TOKEN(yy::parser::token_kind_type::RBRACE); }
 
  /* 不在行首的#号当作普通标点符号处理 */
-"#"         { PUNCTUATION_TOKEN(); }
+"#"         { SET_TOKEN(yy::parser::token_kind_type::HASH); }
 
  /* 空白符 - 全部忽略，但换行符除外（已经单独处理） */
 {WHITESPACE}+ { /* 忽略空白符 */ }

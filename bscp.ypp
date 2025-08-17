@@ -122,8 +122,11 @@ extern struct lex_token token;
     std::string* punct;
 }
 
+%token <punct> EQUALS "="
 %token <punct> PLUS_EQ "+="
+%token <punct> INCREMENT "++"
 %token <punct> MINUS_EQ "-="
+%token <punct> DECREMENT "--"
 %token <punct> STAR_EQ "*="
 %token <punct> SLASH_EQ "/="
 %token <punct> PERCENT_EQ "%="
@@ -138,6 +141,32 @@ extern struct lex_token token;
 %token <punct> SHIFT_RIGHT_EQ ">>="
 %token <punct> LOGIC_AND "&&"
 %token <punct> LOGIC_OR "||"
+%token <punct> UNARY "!"
+%token <punct> PLUS "+"
+%token <punct> MINUS "-"
+%token <punct> STAR "*"
+%token <punct> SLASH "/"
+%token <punct> PERCENT "%"
+%token <punct> AMPERSAND "&"
+%token <punct> BOR "|"
+%token <punct> BNOT "~"
+%token <punct> XOR "^"
+%token <punct> LESS "<"
+%token <punct> GREATER ">"
+%token <punct> QUESTION_MARK "?"
+%token <punct> COLON ":"
+%token <punct> COMMA ","
+%token <punct> DOT "."
+%token <punct> SEMICOLON ";"
+%token <punct> LPAREN "("
+%token <punct> RPAREN ")"
+%token <punct> LBRACKET "["
+%token <punct> RBRACKET "]"
+%token <punct> LBRACE "{"
+%token <punct> RBRACE "}"
+%token <punct> HASH "#"
+%token <punct> SHL "<<"
+%token <punct> SHR ">>"
 
 %token <lex_token> lex_word
 %token <lex_token> lex_number
@@ -168,35 +197,44 @@ extern struct lex_token token;
 %right UNARY
 %nonassoc '[' '.'
 
-%type <value> expr
+%type <value> expr start
 %type <num_value> NUMBER
 %type <obj_value> STRING
 %type <word> WORD
 %type <null_value> FIELD
 
 %%
-start: expr;
+start: expr {
+    if(dynamic_cast<bscp_num*>($1)){
+        printf("%Lf\n", static_cast<bscp_num*>($1)->value);
+    }else if(dynamic_cast<bscp_null*>($1)){
+        printf("(null)\n");
+    }else{
+        printf("(obj)\n");
+    }
+    $$ = $1;
+};
 
 expr
     : NUMBER { $$ = $1; }
     | STRING { $$ = $1; }
     | FIELD { $$ = $1; }
-    | '(' expr ')' { $$ = $2; }
-    | expr '.' expr {
+    | "(" expr ")" { $$ = $2; }
+    | expr "." expr {
         require_true(dynamic_cast<bscp_obj*>($1), "Left operand of '.' must be an object");
         $$ = new bscp_num(yyget_extra(), static_cast<bscp_num*>($3)->value);
     }
-    | expr '[' expr ']' {
+    | expr "[" expr "]" {
         require_true(dynamic_cast<bscp_obj*>($1), "Left operand of '[]' must be an object");
         require_true(dynamic_cast<bscp_num*>($3), "Index must be a number");
         long double index = static_cast<bscp_num*>($3)->value;
         $$ = static_cast<bscp_obj*>($1)->fields[std::to_string((size_t)index)].value;
     }
-    | expr '.' WORD {
+    | expr "." WORD {
         require_true(dynamic_cast<bscp_obj*>($1), "Left operand of '.' must be an object");
         $$ = static_cast<bscp_obj*>($1)->fields[*$3].value;
     }
-    | '!' expr %prec UNARY {
+    | "!" expr %prec UNARY {
         $$ = new bscp_num(yyget_extra(), value2bool($2) ? 0 : 1);
     }
     | expr "==" expr {
@@ -227,36 +265,36 @@ expr
     | expr "||" expr { 
         $$ = new bscp_num(yyget_extra(), value2bool($1) || value2bool($3) ? 1 : 0);
     }
-    | expr '?' expr ':' expr { 
+    | expr "?" expr ":" expr { 
         $$ = value2bool($1) ? $3 : $5;
     }
-    | expr '=' expr {
+    | expr "=" expr {
         require_true($1->parent != nullptr, "Left operand must be assignable");
         $$ = $3;
         $1->parent->fields[$1->name] = Field(*$3, false);
     }
-    | expr ',' expr { $$ = $3; }
-    | '+' expr %prec UNARY { 
+    | expr "," expr { $$ = $3; }
+    | "+" expr %prec UNARY { 
         require_true(dynamic_cast<bscp_num*>($2), "Operand of '+' must be a number");
         $$ = new bscp_num(yyget_extra(), static_cast<bscp_num*>($2)->value);
     }
-    | '-' expr %prec UNARY { 
+    | "-" expr %prec UNARY { 
         require_true(dynamic_cast<bscp_num*>($2), "Operand of '-' must be a number");
         $$ = new bscp_num(yyget_extra(), -static_cast<bscp_num*>($2)->value);
     }
-    | '~' expr %prec UNARY { 
+    | "~" expr %prec UNARY { 
         require_true(dynamic_cast<bscp_num*>($2), "Operand of '~' must be a number");
         long double val = static_cast<bscp_num*>($2)->value;
         $$ = new bscp_num(yyget_extra(), ~(long)val);
     }
-    | expr '*' expr { 
+    | expr "*" expr { 
         require_true(dynamic_cast<bscp_num*>($1) && dynamic_cast<bscp_num*>($3), 
                    "Operands of '*' must be numbers");
         long double a = static_cast<bscp_num*>($1)->value;
         long double b = static_cast<bscp_num*>($3)->value;
         $$ = new bscp_num(yyget_extra(), a * b);
     }
-    | expr '/' expr { 
+    | expr "/" expr { 
         require_true(dynamic_cast<bscp_num*>($1) && dynamic_cast<bscp_num*>($3), 
                    "Operands of '/' must be numbers");
         long double a = static_cast<bscp_num*>($1)->value;
@@ -264,21 +302,21 @@ expr
         require_true(b != 0, "Division by zero");
         $$ = new bscp_num(yyget_extra(), a / b);
     }
-    | expr '+' expr { 
+    | expr "+" expr { 
         require_true(dynamic_cast<bscp_num*>($1) && dynamic_cast<bscp_num*>($3), 
                    "Operands of '+' must be numbers");
         long double a = static_cast<bscp_num*>($1)->value;
         long double b = static_cast<bscp_num*>($3)->value;
         $$ = new bscp_num(yyget_extra(), a + b);
     }
-    | expr '-' expr { 
+    | expr "-" expr { 
         require_true(dynamic_cast<bscp_num*>($1) && dynamic_cast<bscp_num*>($3), 
                    "Operands of '-' must be numbers");
         long double a = static_cast<bscp_num*>($1)->value;
         long double b = static_cast<bscp_num*>($3)->value;
         $$ = new bscp_num(yyget_extra(), a - b);
     }
-    | expr '<' expr { 
+    | expr "<" expr { 
         require_true(dynamic_cast<bscp_num*>($1) && dynamic_cast<bscp_num*>($3), 
                    "Operands of '<' must be numbers");
         long double a = static_cast<bscp_num*>($1)->value;
@@ -292,7 +330,7 @@ expr
         long double b = static_cast<bscp_num*>($3)->value;
         $$ = new bscp_num(yyget_extra(), a <= b ? 1 : 0);
     }
-    | expr '>' expr { 
+    | expr ">" expr { 
         require_true(dynamic_cast<bscp_num*>($1) && dynamic_cast<bscp_num*>($3), 
                    "Operands of '>' must be numbers");
         long double a = static_cast<bscp_num*>($1)->value;
@@ -306,21 +344,21 @@ expr
         long double b = static_cast<bscp_num*>($3)->value;
         $$ = new bscp_num(yyget_extra(), a >= b ? 1 : 0);
     }
-    | expr '&' expr { 
+    | expr "&" expr { 
         require_true(dynamic_cast<bscp_num*>($1) && dynamic_cast<bscp_num*>($3), 
                    "Operands of '&' must be numbers");
         long double a = static_cast<bscp_num*>($1)->value;
         long double b = static_cast<bscp_num*>($3)->value;
         $$ = new bscp_num(yyget_extra(), (long)a & (long)b);
     }
-    | expr '|' expr { 
+    | expr "|" expr { 
         require_true(dynamic_cast<bscp_num*>($1) && dynamic_cast<bscp_num*>($3), 
                    "Operands of '|' must be numbers");
         long double a = static_cast<bscp_num*>($1)->value;
         long double b = static_cast<bscp_num*>($3)->value;
         $$ = new bscp_num(yyget_extra(), (long)a | (long)b);
     }
-    | expr '^' expr { 
+    | expr "^" expr { 
         require_true(dynamic_cast<bscp_num*>($1) && dynamic_cast<bscp_num*>($3), 
                    "Operands of '^' must be numbers");
         long double a = static_cast<bscp_num*>($1)->value;
@@ -409,7 +447,7 @@ expr
         $$ = new bscp_num(yyget_extra(), a ^ b);
         $1->parent->fields[$1->name] = Field(*$$, false);
     }
-    | '{' expr '}' { 
+    | "{" expr "}" { 
         $$ = new bscp_obj(yyget_extra());
     }
     ;

@@ -101,6 +101,28 @@ int repl_mode() {
     return 0;
 }
 
+int bscp_eval(bscp_value* value){
+    if(dynamic_cast<bscp_num*>(value)){
+        printf("%Lf", static_cast<bscp_num*>(value)->value);
+        return 0;
+    }
+    if(!dynamic_cast<bscp_obj*>(value)){
+        printf("(null)");
+        return 0;
+    }
+    printf("{");
+    bscp_obj* obj = static_cast<bscp_obj*>(value);
+    for(auto [name, field]: obj->fields){
+        if(!field.is_tmp){
+            printf("%s:", name.c_str());
+            bscp_eval(field.value);
+            printf(",");
+        }
+    }
+    printf("}");
+    return 0;
+}
+
 __attribute__((weak)) 
 int main(int argc, char *argv[]) {
     struct arguments arguments;

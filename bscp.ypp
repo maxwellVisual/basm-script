@@ -10,6 +10,7 @@
 #include "lex.hpp"
 
 bscp_obj* s_obj(bscp_obj* parent, bscp_value* first);
+int bscp_eval(bscp_value* value);
 
 int yylex(yy::parser::value_type* value);
 
@@ -205,13 +206,8 @@ extern struct lex_token token;
 
 %%
 start: expr {
-    if(dynamic_cast<bscp_num*>($1)){
-        printf("%Lf\n", static_cast<bscp_num*>($1)->value);
-    }else if(dynamic_cast<bscp_null*>($1)){
-        printf("(null)\n");
-    }else{
-        printf("(obj)\n");
-    }
+    (void)bscp_eval($1);
+    printf("\n");
     $$ = $1;
 };
 

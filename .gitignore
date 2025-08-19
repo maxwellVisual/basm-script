@@ -1,13 +1,18 @@
+# Intermediate Files
 bscp.hpp
 bscp.tab.cpp
 stack.hh
-bscp
 bscp.yy.cpp
 bscp.yy.hpp
 location.hh
 
+# Binary Files
 *.o
 *.a
 *.so
+bscp
 
+# IDE Configs
 .vscode/
+.cursor/
+.windsurf/

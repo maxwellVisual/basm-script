@@ -1,0 +1,21 @@
+# Demo
+### Comments
+```basm-script
+# unix-style single-line comment
+// c-style single-line comment
+/* c-style multi-line comments */
+/** c-style multi-line comments */
+```
+### Data Types
+| type name | example |
+| --------- | ------- |
+| numeric constant | 0, -1.5, 0xf1, 0b1, 076 |
+| object | (){}, "a", \[1,2,3\] |
+
+### Psudo Data Types
+| name | definition | example |
+| -- | -- | -- |
+| list | object<i: v> | \[1,2,3\] -> {.1=1;.2=2;.3=3;} |
+| string | list<v> | "hello" -> \[104,101,108,108,111\] -> {.0=104;.1=101;.2=108;.3=108;.4=111;} |
+| char | unicode num | 'a' = 97 |
+| function | object w/out attributes | {printf();return 0;}

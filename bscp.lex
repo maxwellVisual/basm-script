@@ -6,8 +6,6 @@
 extern char* yytext;
 extern int yyleng;
 
-size_t line_count = 0;
-
 /* 设置词法标记并返回 */
 /* 设置token类型并复制yytext内容 */
 #define SET_TOKEN(token_type) \
@@ -54,7 +52,6 @@ DIGIT       [0-9]
 LETTER      [a-zA-Z_]
 ID          {LETTER}({LETTER}|{DIGIT})*
 WHITESPACE  [ \t\r\f]
-NEWLINE     [\n]
 INTEGER     ([1-9]{DIGIT}*)|0
 FLOAT       {INTEGER}\.{DIGIT}+([eE][+-]?{DIGIT}+)?
 SCIENTIFIC  {DIGIT}+[eE][+-]?{DIGIT}+
@@ -68,12 +65,6 @@ FMT_CHAR    (\\\')|(\\\")|(\\\?)|(\\\\)|(\\a)|(\\b)|(\\f)|(\\n)|(\\r)|(\\t)|(\\v
  /* ^#  { PUNCTUATION_TOKEN(); BEGIN(PREPROC);  } */
  /* 这个好像不会和比较运算冲突，因为比较运算中间一定有逻辑运算符 */
 \<[a-zA-Z0-9/\.]+\>  { STRING_TOKEN(); }
-
- /* 处理换行符作为EOL标记 */
-{NEWLINE}   {
-    line_count++;
-    // EOL_TOKEN(); 
-}
 
  /* 标识符 */
 {ID}        { 
@@ -102,6 +93,7 @@ FMT_CHAR    (\\\')|(\\\")|(\\\?)|(\\\\)|(\\a)|(\\b)|(\\f)|(\\n)|(\\r)|(\\t)|(\\v
 <COMMENT>"*"+"/"    { BEGIN(INITIAL); }
 
 "//"[^\n]*          { /* 忽略单行注释 */ }
+"#"[^\n]*          { /* 忽略单行注释 */ }
 
  /* 
   * 运算符和标点符号 

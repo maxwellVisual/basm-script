@@ -1,2 +1,21 @@
+#!./bscp
+
+# comments
+// comments
+/* comments */
+/** comments */
+
+# hello world
 print("hello world\n");
 debug("yellow world\n");
+
+print("\n--------\n");
+
+# 局部变量
+text = "text0";
+.text = "g_text";
+print("text: ");
+print(text);
+print("\n.text: ");
+print(.text);
+print("\n");

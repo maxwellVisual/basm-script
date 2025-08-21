@@ -353,11 +353,18 @@ NUMBER: lex_number {
     std::string raw(current_token.raw, current_token.raw_size);
     $$ = new std::shared_ptr<bscp::num>(new bscp::num(nullptr, raw));
 };
-FIELD: WORD {
-    bscp::field* field = new bscp::field(nullptr);
-    field->name = *$1;
-    $$ = new std::shared_ptr<bscp::field>(field);
-};
+FIELD
+    : WORD {
+        bscp::field* field = new bscp::field(nullptr, true);
+        field->name = *$1;
+        $$ = new std::shared_ptr<bscp::field>(field);
+    }
+    | "." WORD {
+        bscp::field* field = new bscp::field(nullptr, false);
+        field->name = *$2;
+        $$ = new std::shared_ptr<bscp::field>(field);
+    }
+    ;
 STRING: lex_string {
     auto obj = std::make_shared<bscp::obj>(nullptr);
     std::string raw(current_token.raw, current_token.raw_size);

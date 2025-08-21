@@ -465,12 +465,14 @@ namespace bscp
                     parent->static_fields.insert_or_assign(field->name, value);
                 }
 
-                for(auto i : stack.top()){
-                    std::shared_ptr<bscp::value> &v = dynamic_cast<bscp::field*>(i.second.get())->value;
-                    std::cout<<i.first<<": ";
-                    eval(v);
-                    std::cout<<"\n";
-                }
+                // for(auto i : stack.top()){
+                //     auto field = std::dynamic_pointer_cast<bscp::field>(i.second);
+                //     std::shared_ptr<bscp::value> &v = i.second;
+                //     std::cout<<i.first<<": ";
+                //     std::cout.flush();
+                //     eval(v);
+                //     std::cout<<"\n";
+                // }
                 return std::shared_ptr<bscp::value>(field);
             }
             case oper::OP_ADD_ASSIGN:

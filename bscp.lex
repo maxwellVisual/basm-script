@@ -51,7 +51,7 @@ extern int yyleng;
 DIGIT       [0-9]
 LETTER      [a-zA-Z_]
 ID          {LETTER}({LETTER}|{DIGIT})*
-WHITESPACE  [ \t\r\f]
+WHITESPACE  [ \t\r\f\n]
 INTEGER     ([1-9]{DIGIT}*)|0
 FLOAT       {INTEGER}\.{DIGIT}+([eE][+-]?{DIGIT}+)?
 SCIENTIFIC  {DIGIT}+[eE][+-]?{DIGIT}+
@@ -166,6 +166,6 @@ FMT_CHAR    (\\\')|(\\\")|(\\\?)|(\\\\)|(\\a)|(\\b)|(\\f)|(\\n)|(\\r)|(\\t)|(\\v
 .           { UNKNOWN_TOKEN(); }
 
  /* 处理文件结束 */
- <<EOF>>     { EOF_TOKEN(); }
+<<EOF>>     { EOF_TOKEN(); }
 
 %%

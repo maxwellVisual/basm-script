@@ -19,7 +19,7 @@ int lex_next(struct lex_token* buf) {
         return 0;
     }
     int ret = lexer->yylex();
-    // printf("token: %d '%s'\n", current_token.type, current_token.raw);
+    // wprintf(L"token: %d '%s'\n", current_token.type, current_token.raw);
     if(buf == NULL){
         return ret;
     }

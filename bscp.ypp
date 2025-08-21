@@ -15,15 +15,15 @@
 
 extern yyFlexLexer* lexer;
 
-bscp_obj* s_obj(bscp_obj* parent, bscp_value* first);
-int bscp_eval(bscp_value* value);
-
 // int yylex(yy::parser::value_type* value);
 int yylex(yy::parser::value_type* value, yy::parser::location_type* location);
 
 extern struct lex_token current_token;
 extern const char* err_msg;
-extern bscp_value* output;
+extern std::shared_ptr<bscp::value> output;
+namespace bscp{
+    extern int eval(std::shared_ptr<bscp::value> &value);
+}
 
 #define require_true(expr, ...) \
     do { \
@@ -46,11 +46,12 @@ extern bscp_value* output;
 
 %union {
     int lex_token;
-    bscp_value* value;
-    bscp_obj* obj_value;
-    bscp_num* num_value;
-    bscp_null* null_value;
-    bscp_list* list_value;
+    std::shared_ptr<bscp::value> *value;
+    std::shared_ptr<bscp::obj> *obj_value;
+    std::shared_ptr<bscp::num> *num_value;
+    std::shared_ptr<bscp::null> *null_value; 
+    std::shared_ptr<bscp::field> *field_value;
+    std::shared_ptr<bscp::list> *list_value;
 
     std::string* word;
     std::string* punct;
@@ -127,237 +128,245 @@ extern bscp_value* output;
 
 %type <value> expr start
 %type <num_value> NUMBER
-%type <obj_value> STRING
+%type <obj_value> STRING object
 %type <word> WORD
-%type <null_value> FIELD
-%type <list_value> arg_list
+%type <field_value> FIELD
+%type <list_value> arg_list expr_list
 
 %%
-start: expr{
-    output = $1;
-    $$ = $1;
+start: expr_list {
+    auto obj = std::make_shared<bscp::obj>(nullptr);
+    obj->parent = obj;
+    for(auto i=(*$1)->values.rbegin(); i!=(*$1)->values.rend(); i++){
+        (*i)->parent = obj;
+        obj->lines.emplace_back(*i);
+    }
+    output = obj;
+    $$ = &output;
 };
 
 arg_list
     : %empty {
-        $$ = new bscp_list({});
+        $$ = new std::shared_ptr<bscp::list>(new bscp::list({}));
     }
     | expr {
-        $$ = new bscp_list({$1});
+        $$ = new std::shared_ptr<bscp::list>(new bscp::list({std::shared_ptr<bscp::value>(*$1)}));
     }
     | expr "," arg_list {
-        ($3)->values.push_back($1);
+        (*$3)->values.emplace_back(*$1);
         $$ = $3;
     }
-
-expr
-    : NUMBER { $$ = $1; }
-    | STRING { $$ = $1; }
-    | FIELD { $$ = $1; }
-    | %empty { $$ = new bscp_null(nullptr); }
-    | expr ";" expr {
-        if(!dynamic_cast<bscp_null*>($1)){
-            $$ = $3;
-            delete $1;
-        }else if(!dynamic_cast<bscp_null*>($3)){
-            $$ = $1;
-            delete $3;
-        }else {
-            ($3)->last = ($1);
-            $$ = $3;
-        }
+expr_list
+    : %empty {
+        $$ = new std::shared_ptr<bscp::list>(new bscp::list({}));
     }
+    | expr {
+        $$ = new std::shared_ptr<bscp::list>(new bscp::list({std::shared_ptr<bscp::value>(*$1)}));
+    }
+    | expr ";" expr_list {
+        (*$3)->values.emplace_back(*$1);
+        $$ = $3;
+    }
+expr
+    : NUMBER { $$ = new std::shared_ptr<bscp::value>(std::dynamic_pointer_cast<bscp::value>(*$1)); }
+    | STRING { $$ = new std::shared_ptr<bscp::value>(std::dynamic_pointer_cast<bscp::value>(*$1)); }
+    | FIELD { $$ = new std::shared_ptr<bscp::value>(std::dynamic_pointer_cast<bscp::value>(*$1)); }
     | "(" expr ")" { $$ = $2; }
     | expr "." expr {
-        require_true(dynamic_cast<bscp_obj*>($1), "Left operand of '.' must be an object");
-        $$ = new bscp_oper(bscp_oper::OP_DOT, {$1, $3});
+        require_true(std::dynamic_pointer_cast<bscp::obj>(*$1), "Left operand of '.' must be an object");
+        $$ = new std::shared_ptr<bscp::value>(new bscp::oper(bscp::oper::OP_DOT, {*$1, *$3}));
     }
     | expr "[" expr "]" {
-        require_true(dynamic_cast<bscp_obj*>($1), "Left operand of '[]' must be an object");
-        require_true(dynamic_cast<bscp_num*>($3), "Index must be a number");
-        $$ = new bscp_oper(bscp_oper::OP_INDEX, {$1, $3});
+        require_true(std::dynamic_pointer_cast<bscp::obj>(*$1), "Left operand of '[]' must be an object");
+        require_true(std::dynamic_pointer_cast<bscp::num>(*$3), "Index must be a number");
+        $$ = new std::shared_ptr<bscp::value>(new bscp::oper(bscp::oper::OP_INDEX, {*$1, *$3}));
     }
     | expr "." WORD {
-        require_true(dynamic_cast<bscp_obj*>($1), "Left operand of '.' must be an object");
-        $$ = new bscp_oper(bscp_oper::OP_DOT_WORD, {$1, new bscp_num(nullptr, *$3)});
+        require_true(std::dynamic_pointer_cast<bscp::obj>(*$1), "Left operand of '.' must be an object");
+        $$ = new std::shared_ptr<bscp::value>(new bscp::oper(bscp::oper::OP_DOT_WORD, {*$1, std::shared_ptr<bscp::value>(new bscp::num(nullptr, *$3))}));
     }
     | "!" expr %prec UNARY {
-        $$ = new bscp_oper(bscp_oper::OP_UNARY_NOT, {$2});
+        $$ = new std::shared_ptr<bscp::value>(new bscp::oper(bscp::oper::OP_UNARY_NOT, {*$2}));
     }
     | expr "==" expr {
-        $$ = new bscp_oper(bscp_oper::OP_EQUAL_TO, {$1, $3});
+        $$ = new std::shared_ptr<bscp::value>(new bscp::oper(bscp::oper::OP_EQUAL_TO, {*$1, *$3}));
     }
     | expr "!=" expr { 
-        $$ = new bscp_oper(bscp_oper::OP_NOT_EQUAL_TO, {$1, $3});
+        $$ = new std::shared_ptr<bscp::value>(new bscp::oper(bscp::oper::OP_NOT_EQUAL_TO, {*$1, *$3}));
     }
     | expr "&&" expr { 
-        $$ = new bscp_oper(bscp_oper::OP_LOGICAL_AND, {$1, $3});
+        $$ = new std::shared_ptr<bscp::value>(new bscp::oper(bscp::oper::OP_LOGICAL_AND, {*$1, *$3}));
     }
     | expr "||" expr { 
-        $$ = new bscp_oper(bscp_oper::OP_LOGICAL_OR, {$1, $3});
+        $$ = new std::shared_ptr<bscp::value>(new bscp::oper(bscp::oper::OP_LOGICAL_OR, {*$1, *$3}));
     }
     | expr "?" expr ":" expr { 
-        $$ = new bscp_oper(bscp_oper::OP_TERNARY_CONDITIONAL, {$1, $3, $5});
+        $$ = new std::shared_ptr<bscp::value>(new bscp::oper(bscp::oper::OP_TERNARY_CONDITIONAL, {*$1, *$3, *$5}));
     }
     | expr "=" expr {
-        require_true(!$1->name.empty(), "Left operand must be assignable");
-        $$ = new bscp_oper(bscp_oper::OP_ASSIGN, {$1, $3});
+        // require_true(!$1->name.empty(), "Left operand must be assignable");
+        $$ = new std::shared_ptr<bscp::value>(new bscp::oper(bscp::oper::OP_ASSIGN, {*$1, *$3}));
     }
     | "+" expr %prec UNARY { 
-        require_true(dynamic_cast<bscp_num*>($2), "Operand of '+' must be a number");
-        $$ = new bscp_oper(bscp_oper::OP_UNARY_PLUS, {$2});
+        require_true(std::dynamic_pointer_cast<bscp::num>(*$2), "Operand of '+' must be a number");
+        $$ = new std::shared_ptr<bscp::value>(new bscp::oper(bscp::oper::OP_UNARY_PLUS, {*$2}));
     }
     | "-" expr %prec UNARY { 
-        require_true(dynamic_cast<bscp_num*>($2), "Operand of '-' must be a number");
-        $$ = new bscp_oper(bscp_oper::OP_UNARY_MINUS, {$2});
+        require_true(std::dynamic_pointer_cast<bscp::num>(*$2), "Operand of '-' must be a number");
+        $$ = new std::shared_ptr<bscp::value>(new bscp::oper(bscp::oper::OP_UNARY_MINUS, {*$2}));
     }
     | "~" expr %prec UNARY { 
-        require_true(dynamic_cast<bscp_num*>($2), "Operand of '~' must be a number");
-        $$ = new bscp_oper(bscp_oper::OP_BITWISE_NOT, {$2});
+        require_true(std::dynamic_pointer_cast<bscp::num>(*$2), "Operand of '~' must be a number");
+        $$ = new std::shared_ptr<bscp::value>(new bscp::oper(bscp::oper::OP_BITWISE_NOT, {*$2}));
     }
     | expr "*" expr { 
-        require_true(dynamic_cast<bscp_num*>($1) && dynamic_cast<bscp_num*>($3), 
+        require_true(std::dynamic_pointer_cast<bscp::num>(*$1) && std::dynamic_pointer_cast<bscp::num>(*$3), 
                    "Operands of '*' must be numbers");
-        $$ = new bscp_oper(bscp_oper::OP_MULTIPLY, {$1, $3});
+        $$ = new std::shared_ptr<bscp::value>(new bscp::oper(bscp::oper::OP_MULTIPLY, {*$1, *$3}));
     }
     | expr "/" expr { 
-        require_true(dynamic_cast<bscp_num*>($1) && dynamic_cast<bscp_num*>($3), 
+        require_true(std::dynamic_pointer_cast<bscp::num>(*$1) && std::dynamic_pointer_cast<bscp::num>(*$3), 
                    "Operands of '/' must be numbers");
-        $$ = new bscp_oper(bscp_oper::OP_DIVIDE, {$1, $3});
+        $$ = new std::shared_ptr<bscp::value>(new bscp::oper(bscp::oper::OP_DIVIDE, {*$1, *$3}));
     }
     | expr "+" expr { 
-        require_true(dynamic_cast<bscp_num*>($1) && dynamic_cast<bscp_num*>($3), 
+        require_true(std::dynamic_pointer_cast<bscp::num>(*$1) && std::dynamic_pointer_cast<bscp::num>(*$3), 
                    "Operands of '+' must be numbers");
-        $$ = new bscp_oper(bscp_oper::OP_PLUS, {$1, $3});
+        $$ = new std::shared_ptr<bscp::value>(new bscp::oper(bscp::oper::OP_PLUS, {*$1, *$3}));
     }
     | expr "-" expr { 
-        require_true(dynamic_cast<bscp_num*>($1) && dynamic_cast<bscp_num*>($3), 
+        require_true(std::dynamic_pointer_cast<bscp::num>(*$1) && std::dynamic_pointer_cast<bscp::num>(*$3), 
                    "Operands of '-' must be numbers");
-        $$ = new bscp_oper(bscp_oper::OP_MINUS, {$1, $3});
+        $$ = new std::shared_ptr<bscp::value>(new bscp::oper(bscp::oper::OP_MINUS, {*$1, *$3}));
     }
     | expr "<" expr { 
-        require_true(dynamic_cast<bscp_num*>($1) && dynamic_cast<bscp_num*>($3), 
+        require_true(std::dynamic_pointer_cast<bscp::num>(*$1) && std::dynamic_pointer_cast<bscp::num>(*$3), 
                    "Operands of '<' must be numbers");
-        $$ = new bscp_oper(bscp_oper::OP_LESS_THAN, {$1, $3});
+        $$ = new std::shared_ptr<bscp::value>(new bscp::oper(bscp::oper::OP_LESS_THAN, {*$1, *$3}));
     }
     | expr "<=" expr { 
-        require_true(dynamic_cast<bscp_num*>($1) && dynamic_cast<bscp_num*>($3), 
+        require_true(std::dynamic_pointer_cast<bscp::num>(*$1) && std::dynamic_pointer_cast<bscp::num>(*$3), 
                    "Operands of '<=' must be numbers");
-        $$ = new bscp_oper(bscp_oper::OP_LESS_THAN_OR_EQUAL, {$1, $3});
+        $$ = new std::shared_ptr<bscp::value>(new bscp::oper(bscp::oper::OP_LESS_THAN_OR_EQUAL, {*$1, *$3}));
     }
     | expr ">" expr { 
-        require_true(dynamic_cast<bscp_num*>($1) && dynamic_cast<bscp_num*>($3), 
+        require_true(std::dynamic_pointer_cast<bscp::num>(*$1) && std::dynamic_pointer_cast<bscp::num>(*$3), 
                    "Operands of '>' must be numbers");
-        $$ = new bscp_oper(bscp_oper::OP_GREATER_THAN, {$1, $3});
+        $$ = new std::shared_ptr<bscp::value>(new bscp::oper(bscp::oper::OP_GREATER_THAN, {*$1, *$3}));
     }
     | expr ">=" expr { 
-        require_true(dynamic_cast<bscp_num*>($1) && dynamic_cast<bscp_num*>($3), 
+        require_true(std::dynamic_pointer_cast<bscp::num>(*$1) && std::dynamic_pointer_cast<bscp::num>(*$3), 
                    "Operands of '>=' must be numbers");
-        $$ = new bscp_oper(bscp_oper::OP_GREATER_THAN_OR_EQUAL, {$1, $3});
+        $$ = new std::shared_ptr<bscp::value>(new bscp::oper(bscp::oper::OP_GREATER_THAN_OR_EQUAL, {*$1, *$3}));
     }
     | expr "&" expr { 
-        require_true(dynamic_cast<bscp_num*>($1) && dynamic_cast<bscp_num*>($3), 
+        require_true(std::dynamic_pointer_cast<bscp::num>(*$1) && std::dynamic_pointer_cast<bscp::num>(*$3), 
                    "Operands of '&' must be numbers");
-        $$ = new bscp_oper(bscp_oper::OP_BITWISE_AND, {$1, $3});
+        $$ = new std::shared_ptr<bscp::value>(new bscp::oper(bscp::oper::OP_BITWISE_AND, {*$1, *$3}));
     }
     | expr "|" expr { 
-        require_true(dynamic_cast<bscp_num*>($1) && dynamic_cast<bscp_num*>($3), 
+        require_true(std::dynamic_pointer_cast<bscp::num>(*$1) && std::dynamic_pointer_cast<bscp::num>(*$3), 
                    "Operands of '|' must be numbers");
-        $$ = new bscp_oper(bscp_oper::OP_BITWISE_OR, {$1, $3});
+        $$ = new std::shared_ptr<bscp::value>(new bscp::oper(bscp::oper::OP_BITWISE_OR, {*$1, *$3}));
     }
     | expr "^" expr { 
-        require_true(dynamic_cast<bscp_num*>($1) && dynamic_cast<bscp_num*>($3), 
+        require_true(std::dynamic_pointer_cast<bscp::num>(*$1) && std::dynamic_pointer_cast<bscp::num>(*$3), 
                    "Operands of '^' must be numbers");
-        $$ = new bscp_oper(bscp_oper::OP_BITWISE_XOR, {$1, $3});
+        $$ = new std::shared_ptr<bscp::value>(new bscp::oper(bscp::oper::OP_BITWISE_XOR, {*$1, *$3}));
     }
     | expr "+=" expr {
-        require_true(dynamic_cast<bscp_num*>($1) && dynamic_cast<bscp_num*>($3), 
+        require_true(std::dynamic_pointer_cast<bscp::num>(*$1) && std::dynamic_pointer_cast<bscp::num>(*$3), 
                    "Operands of '+=' must be numbers");
-        $$ = new bscp_oper(bscp_oper::OP_ADD_ASSIGN, {$1, $3});
+        $$ = new std::shared_ptr<bscp::value>(new bscp::oper(bscp::oper::OP_ADD_ASSIGN, {*$1, *$3}));
     }
     | expr "-=" expr {
-        require_true(dynamic_cast<bscp_num*>($1) && dynamic_cast<bscp_num*>($3), 
+        require_true(std::dynamic_pointer_cast<bscp::num>(*$1) && std::dynamic_pointer_cast<bscp::num>(*$3), 
                    "Operands of '-=' must be numbers");
-        $$ = new bscp_oper(bscp_oper::OP_SUBTRACT_ASSIGN, {$1, $3});
+        $$ = new std::shared_ptr<bscp::value>(new bscp::oper(bscp::oper::OP_SUBTRACT_ASSIGN, {*$1, *$3}));
     }
     | expr "*=" expr {
-        require_true(dynamic_cast<bscp_num*>($1) && dynamic_cast<bscp_num*>($3), 
+        require_true(std::dynamic_pointer_cast<bscp::num>(*$1) && std::dynamic_pointer_cast<bscp::num>(*$3), 
                    "Operands of '*=' must be numbers");
-        $$ = new bscp_oper(bscp_oper::OP_MULTIPLY_ASSIGN, {$1, $3});
+        $$ = new std::shared_ptr<bscp::value>(new bscp::oper(bscp::oper::OP_MULTIPLY_ASSIGN, {*$1, *$3}));
     }
     | expr "/=" expr {
-        require_true(dynamic_cast<bscp_num*>($1) && dynamic_cast<bscp_num*>($3), 
+        require_true(std::dynamic_pointer_cast<bscp::num>(*$1) && std::dynamic_pointer_cast<bscp::num>(*$3), 
                    "Operands of '/=' must be numbers");
-        $$ = new bscp_oper(bscp_oper::OP_DIVIDE_ASSIGN, {$1, $3});
+        $$ = new std::shared_ptr<bscp::value>(new bscp::oper(bscp::oper::OP_DIVIDE_ASSIGN, {*$1, *$3}));
     }
     | expr "%=" expr {
-        require_true(dynamic_cast<bscp_num*>($1) && dynamic_cast<bscp_num*>($3), 
+        require_true(std::dynamic_pointer_cast<bscp::num>(*$1) && std::dynamic_pointer_cast<bscp::num>(*$3), 
                    "Operands of '%%=' must be numbers");
-        $$ = new bscp_oper(bscp_oper::OP_MODULO_ASSIGN, {$1, $3});
+        $$ = new std::shared_ptr<bscp::value>(new bscp::oper(bscp::oper::OP_MODULO_ASSIGN, {*$1, *$3}));
     }
     | expr "<<=" expr {
-        require_true(dynamic_cast<bscp_num*>($1) && dynamic_cast<bscp_num*>($3), 
+        require_true(std::dynamic_pointer_cast<bscp::num>(*$1) && std::dynamic_pointer_cast<bscp::num>(*$3), 
                    "Operands of '<<=' must be numbers");
-        $$ = new bscp_oper(bscp_oper::OP_SHIFT_LEFT_ASSIGN, {$1, $3});
+        $$ = new std::shared_ptr<bscp::value>(new bscp::oper(bscp::oper::OP_SHIFT_LEFT_ASSIGN, {*$1, *$3}));
     }
     | expr ">>=" expr {
-        require_true(dynamic_cast<bscp_num*>($1) && dynamic_cast<bscp_num*>($3), 
+        require_true(std::dynamic_pointer_cast<bscp::num>(*$1) && std::dynamic_pointer_cast<bscp::num>(*$3), 
                    "Operands of '>>=' must be numbers");
-        $$ = new bscp_oper(bscp_oper::OP_SHIFT_RIGHT_ASSIGN, {$1, $3});
+        $$ = new std::shared_ptr<bscp::value>(new bscp::oper(bscp::oper::OP_SHIFT_RIGHT_ASSIGN, {*$1, *$3}));
     }
     | expr "&=" expr {
-        require_true(dynamic_cast<bscp_num*>($1) && dynamic_cast<bscp_num*>($3),
+        require_true(std::dynamic_pointer_cast<bscp::num>(*$1) && std::dynamic_pointer_cast<bscp::num>(*$3),
                    "Operands of '&=' must be numbers");
-        $$ = new bscp_oper(bscp_oper::OP_BITWISE_AND_ASSIGN, {$1, $3});
+        $$ = new std::shared_ptr<bscp::value>(new bscp::oper(bscp::oper::OP_BITWISE_AND_ASSIGN, {*$1, *$3}));
     }
     | expr "|=" expr {
-        require_true(dynamic_cast<bscp_num*>($1) && dynamic_cast<bscp_num*>($3),
+        require_true(std::dynamic_pointer_cast<bscp::num>(*$1) && std::dynamic_pointer_cast<bscp::num>(*$3),
                    "Operands of '|=' must be numbers");
-        $$ = new bscp_oper(bscp_oper::OP_BITWISE_OR_ASSIGN, {$1, $3});
+        $$ = new std::shared_ptr<bscp::value>(new bscp::oper(bscp::oper::OP_BITWISE_OR_ASSIGN, {*$1, *$3}));
     }
     | expr "^=" expr {
-        require_true(dynamic_cast<bscp_num*>($1) && dynamic_cast<bscp_num*>($3),
+        require_true(std::dynamic_pointer_cast<bscp::num>(*$1) && std::dynamic_pointer_cast<bscp::num>(*$3),
                    "Operands of '^=' must be numbers");
-        $$ = new bscp_oper(bscp_oper::OP_BITWISE_XOR_ASSIGN, {$1, $3});
+        $$ = new std::shared_ptr<bscp::value>(new bscp::oper(bscp::oper::OP_BITWISE_XOR_ASSIGN, {*$1, *$3}));
     }
     | expr "++" %prec INCREMENT {
-        $$ = new bscp_oper(bscp_oper::OP_INCREMENT, {$1});
+        $$ = new std::shared_ptr<bscp::value>(new bscp::oper(bscp::oper::OP_INCREMENT, {*$1}));
     }
     | expr "--" %prec DECREMENT {
-        $$ = new bscp_oper(bscp_oper::OP_DECREMENT, {$1});
-    }
-    | "{" expr "}" { 
-        $$ = new bscp_obj(nullptr);
+        $$ = new std::shared_ptr<bscp::value>(new bscp::oper(bscp::oper::OP_DECREMENT, {*$1}));
     }
     | expr "(" arg_list ")" {
-        std::vector<bscp_value*> values;
-        values.push_back($1);
-        for(auto arg : $3->values){
-            values.push_back(arg);
+        std::vector<std::shared_ptr<bscp::value>> values;
+        values.emplace_back(*$1);
+        for(auto arg : (*$3)->values){
+            values.emplace_back(arg);
         }
-        $3->values = values;
-        $$ = new bscp_oper(bscp_oper::OP_CALL_OBJ, $3);
+        (*$3)->values = values;
+        $$ = new std::shared_ptr<bscp::value>(new bscp::oper(bscp::oper::OP_CALL_OBJ, *$3));
     }
+    | object { $$ = new std::shared_ptr<bscp::value>(*$1); }
     ;
-
+object: "{" expr_list "}" {
+    auto obj = std::make_shared<bscp::obj>(nullptr);
+    for(auto i=(*$2)->values.rbegin(); i!=(*$2)->values.rend(); i--){
+        (*i)->parent = obj;
+        obj->lines.emplace_back(*i);
+    }
+    $$ = new std::shared_ptr<bscp::obj>(obj);
+}
 NUMBER: lex_number {
     std::string raw(current_token.raw, current_token.raw_size);
-    $$ = new bscp_num(nullptr, raw);
+    $$ = new std::shared_ptr<bscp::num>(new bscp::num(nullptr, raw));
 };
 FIELD: WORD {
-    bscp_null* field = new bscp_null(nullptr); 
+    bscp::field* field = new bscp::field(nullptr);
     field->name = *$1;
-    $$ = field;
+    $$ = new std::shared_ptr<bscp::field>(field);
 };
 STRING: lex_string {
-    bscp_obj* obj = new bscp_obj(nullptr);
+    auto obj = std::make_shared<bscp::obj>(nullptr);
     std::string raw(current_token.raw, current_token.raw_size);
     require_true(raw.size() >= 2 && raw[0] == '\"' && raw[raw.size() - 1] == '\"', "Invalid string constant");
     for(size_t i = 0; i < raw.size() - 2; i++) {
         std::string name = std::to_string(i);
-        obj->static_fields.emplace(name, Field(*new bscp_num(obj, raw[i + 1]), false));
+        obj->static_fields.emplace(name, std::shared_ptr<bscp::value>(new bscp::num(obj, raw[i + 1])));
     }
-    $$ = obj;
+    $$ = new std::shared_ptr<bscp::obj>(obj);
 }
 WORD: lex_word {
     $$ = new std::string(current_token.raw, current_token.raw_size);
@@ -365,7 +374,7 @@ WORD: lex_word {
 %%
 
 void yy::parser::error(const yy::parser::location_type &loc, const std::string &msg){
-    fprintf(stderr, "%s:%d: error: %s\n", file_stack.top(), lexer->lineno(),msg.c_str());
+    fwprintf(stderr, L"%s:%d: error: %s\n", file_stack.top(), lexer->lineno(),msg.c_str());
 }
 
 int yylex(yy::parser::value_type* value, yy::parser::location_type* location) {

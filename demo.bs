@@ -1,3 +1,2 @@
-print("aaaaaa")
-#text = "hello world\n";
-#print(text);
+print("hello world\n");
+debug("yellow world\n");

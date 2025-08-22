@@ -16,7 +16,7 @@ extern std::stack<const char*> file_stack;
 struct lex_token {
     int type;
     size_t raw_size;
-    char* raw;
+    wchar_t* raw;
 };
 
 /* 全局变量声明 */

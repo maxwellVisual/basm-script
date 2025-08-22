@@ -14,8 +14,22 @@ print("\n--------\n");
 # 局部变量
 text = "text0";
 .text = "g_text";
+
 print("text: ");
 print(text);
-print("\n.text: ");
+print("\n");
+
+print(".text: ");
 print(.text);
 print("\n");
+
+# 对象
+print("\n--------\n");
+print({
+    .0=97;
+    .1=97;
+    .2=97;
+    .3=97;
+    .4=97;
+    .5="\n"[0];
+});

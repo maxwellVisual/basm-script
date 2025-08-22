@@ -2,23 +2,31 @@
 #include "lex.hpp"
 #include "bscp.hpp"
 
+#include <codecvt>
+
 /* 声明会使用到的外部变量和函数 */
 extern char* yytext;
 extern int yyleng;
 
 /* 设置词法标记并返回 */
 /* 设置token类型并复制yytext内容 */
+void set_token(yy::parser::token_kind_type token_type);
 #define SET_TOKEN(token_type) \
     do { \
         current_token.type = token_type; \
         current_token.raw_size = yyleng; \
-        current_token.raw = yyleng > 0 ? strndup(yytext, yyleng) : NULL; \
+        current_token.raw = yyleng > 0 ? (wchar_t*)calloc(sizeof(wchar_t), yyleng) : NULL; \
+        if(current_token.raw == NULL) return token_type; \
+        size_t size = std::mbstowcs(current_token.raw, yytext, yyleng); \
+        current_token.raw = (wchar_t*)realloc(current_token.raw, sizeof(wchar_t) * size); \
         return token_type; \
     } while(0)
 
 /* 设置不同类型token的辅助宏 */
 #define WORD_TOKEN()            SET_TOKEN(yy::parser::token_kind_type::lex_word)
-#define NUMBER_TOKEN()          SET_TOKEN(yy::parser::token_kind_type::lex_number)
+#define INTEGER_TOKEN()         SET_TOKEN(yy::parser::token_kind_type::lex_integer)
+#define CHAR_TOKEN()            SET_TOKEN(yy::parser::token_kind_type::lex_char)
+#define DECIMAL_TOKEN()         SET_TOKEN(yy::parser::token_kind_type::lex_decimal)
 #define STRING_TOKEN()          SET_TOKEN(yy::parser::token_kind_type::lex_string) 
 #define PUNCTUATION_TOKEN()     SET_TOKEN(yy::parser::token_kind_type::lex_punctuation)
 #define EOL_TOKEN()             SET_TOKEN(yy::parser::token_kind_type::lex_eol)
@@ -72,18 +80,18 @@ FMT_CHAR    (\\\')|(\\\")|(\\\?)|(\\\\)|(\\a)|(\\b)|(\\f)|(\\n)|(\\r)|(\\t)|(\\v
 }
 
  /* 数字常量 - 支持各种格式 */
-{INTEGER}       { NUMBER_TOKEN(); }
-{FLOAT}         { NUMBER_TOKEN(); }
-{SCIENTIFIC}    { NUMBER_TOKEN(); }
-{HEX}           { NUMBER_TOKEN(); }
-{OCTAL}         { NUMBER_TOKEN(); }
-{BINARY}        { NUMBER_TOKEN(); }
+{INTEGER}       { INTEGER_TOKEN(); }
+{FLOAT}         { DECIMAL_TOKEN(); }
+{SCIENTIFIC}    { INTEGER_TOKEN(); }
+{HEX}           { INTEGER_TOKEN(); }
+{OCTAL}         { INTEGER_TOKEN(); }
+{BINARY}        { INTEGER_TOKEN(); }
 
  /* 字符串常量处理 */
 \"([^\\"]|{FMT_CHAR})*\" { STRING_TOKEN(); }
 
  /* 字符常量处理 */
-\'([^\\"]|{FMT_CHAR})\'  { NUMBER_TOKEN(); }
+\'([^\\"]|{FMT_CHAR})\'  { CHAR_TOKEN(); }
 
 
  /* 注释处理 */

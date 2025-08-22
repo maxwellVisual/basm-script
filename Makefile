@@ -5,7 +5,7 @@ YACCFLAGS += -Lc++
 LEX = flex
 LEXFLAGS += -c++
 # 目标文件
-OBJS = bscp.tab.o bscp.yy.o bscp.o lex.o
+OBJS = format.o bscp.tab.o bscp.yy.o bscp.o lex.o
 
 # 默认目标
 all: libbscp.a bscp

@@ -1,7 +1,7 @@
 CXX ?= g++
 CXXFLAGS ?= -Wall -g
 YACC = bison
-YACCFLAGS += -Lc++
+YACCFLAGS += -Lc++ -Wcounterexamples
 LEX = flex
 LEXFLAGS += -c++
 # 目标文件

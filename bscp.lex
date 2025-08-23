@@ -164,16 +164,13 @@ FMT_CHAR    (\\\')|(\\\")|(\\\?)|(\\\\)|(\\a)|(\\b)|(\\f)|(\\n)|(\\r)|(\\t)|(\\v
 "{"         { SET_TOKEN(yy::parser::token_kind_type::LBRACE); }
 "}"         { SET_TOKEN(yy::parser::token_kind_type::RBRACE); }
 
- /* 不在行首的#号当作普通标点符号处理 */
-"#"         { SET_TOKEN(yy::parser::token_kind_type::HASH); }
-
  /* 空白符 - 全部忽略，但换行符除外（已经单独处理） */
 {WHITESPACE}+ { /* 忽略空白符 */ }
 
- /* 处理未知字符 */
-.           { UNKNOWN_TOKEN(); }
-
  /* 处理文件结束 */
 <<EOF>>     { EOF_TOKEN(); }
+
+ /* 处理未知字符 */
+.           { UNKNOWN_TOKEN(); }
 
 %%

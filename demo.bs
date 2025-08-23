@@ -11,7 +11,7 @@ debug("yellow world\n");
 
 print("\n--------\n");
 
-# 局部变量
+# local & static variable
 text = "text0";
 .text = "g_text";
 
@@ -23,13 +23,15 @@ print(".text: ");
 print(.text);
 print("\n");
 
-# 对象
+# objects
 print("\n--------\n");
-print({
+aaa = {
     .0=97;
     .1=97;
     .2=97;
     .3=97;
     .4=97;
     .5="\n"[0];
-});
+};
+print(aaa);
+print(aaa);

@@ -184,10 +184,10 @@ namespace bscp::script
                 return std::shared_ptr<value>(new num(oper->parent, -static_cast<num*>(oper->operands[0].get())->value));
             case oper::OP_BITWISE_NOT:
                 return std::shared_ptr<value>(new num(oper->parent, ~static_cast<long long>(static_cast<num*>(oper->operands[0].get())->value)));
-            case oper::OP_INCREMENT:
+            case oper::OP_INCREMENT_GET:
                 static_cast<num*>(oper->operands[0].get())->value += 1;
                 return std::shared_ptr<value>(new num(oper->parent, static_cast<num*>(oper->operands[0].get())->value));
-            case oper::OP_DECREMENT:
+            case oper::OP_DECREMENT_GET:
                 static_cast<num*>(oper->operands[0].get())->value -= 1;
                 return std::shared_ptr<value>(new num(oper->parent, static_cast<num*>(oper->operands[0].get())->value));
             case oper::OP_ASSIGN:
@@ -487,7 +487,7 @@ int main(int argc, char *argv[]) {
     if (setlocale(LC_ALL, "") == NULL) {
         fwprintf(stderr, L"警告：无法设置 locale。宽字符输出可能不正常。\n");
     }
-    // return execute_file("demo.bs"); // test
+    return execute_file("demo.bs"); // test
     struct arguments arguments;
     arguments.file = NULL;
     arguments.debug = 0;

@@ -392,7 +392,6 @@ CHAR: lex_char {
     ), "Invalid char constant");
     std::wstring raw(current_token.raw+1, current_token.raw_size - 2);
     $$ = new std::shared_ptr<bscp::script::num>(bscp::script::format_chr_const(raw));
-    // $$ = new std::shared_ptr<bscp::script::num>(new bscp::script::num(nullptr, current_token.raw[1]));
 };
 number: INTEGER | DECIMAL | CHAR;
 
@@ -421,14 +420,6 @@ STRING: lex_string {
     ), "Invalid char constant");
     std::wstring raw(current_token.raw+1, current_token.raw_size-2);
     $$ = new std::shared_ptr<bscp::script::obj>(bscp::script::format_str_const(raw));
-
-    // auto obj = std::make_shared<bscp::script::obj>(nullptr);
-    // require_true(raw.size() >= 2 && raw[0] == '\"' && raw[raw.size() - 1] == '\"', "Invalid string constant");
-    // for(size_t i = 0; i < raw.size() - 2; i++) {
-    //     std::wstring name = std::to_wstring(i);
-    //     obj->static_fields.emplace(name, std::shared_ptr<bscp::script::value>(new bscp::script::num(obj, raw[i + 1])));
-    // }
-    // $$ = new std::shared_ptr<bscp::script::obj>(obj);
 }
 WORD: lex_word {
     $$ = new std::wstring(current_token.raw, current_token.raw_size);

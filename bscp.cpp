@@ -120,17 +120,6 @@ namespace bscp::script
                     call_print(oper->operands[1], ind);
                     ind >> wstr;
 
-                    // // convert to string
-                    // typedef std::codecvt<wchar_t, char, std::mbstate_t> codecvt_t;
-                    // const codecvt_t& codecvt = std::use_facet<codecvt_t>(std::locale(""));
-                    // std::mbstate_t state = std::mbstate_t();
-                    // std::string str(wstr.size() * codecvt.max_length(), '\0');
-                    // const wchar_t* from_next;
-                    // char* to_next;
-                    // codecvt.out(state, wstr.data(), wstr.data() + wstr.size(), from_next, 
-                    //             &str[0], &str[0] + str.size(), to_next);
-                    // str.resize(to_next - &str[0]);
-
                     // find target
                     auto node = obj->static_fields.find(wstr);
                     if(node == obj->static_fields.end()){

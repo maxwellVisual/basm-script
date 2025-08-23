@@ -438,8 +438,8 @@ static char doc[] = "bscp - A simple expression language interpreter";
 static char args_doc[] = "[FILE]";
 
 static struct argp_option options[] = {
-    {"debug", 'd', 0, 0, "Enable debug output"},
-    {0}
+    {"debug", 'd', 0, 0, "Enable debug output", 0},
+    {NULL, 0, 0, 0, NULL, 0}
 };
 
 struct arguments {
@@ -460,8 +460,6 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state) {
         arguments->file = arg;
         break;
     case ARGP_KEY_END:
-        if (state->arg_num < 0)
-            argp_usage(state);
         break;
     default:
         return ARGP_ERR_UNKNOWN;
@@ -469,7 +467,15 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state) {
     return 0;
 }
 
-static struct argp argp = {options, parse_opt, args_doc, doc};
+static struct argp argp = {
+    .options = options,
+    .parser = parse_opt,
+    .args_doc = args_doc,
+    .doc = doc,
+    .children = NULL,
+    .help_filter = NULL,
+    .argp_domain = NULL,
+};
 
 __attribute__((weak)) 
 int main(int argc, char *argv[]) {

@@ -15,7 +15,7 @@ void set_token(yy::parser::token_kind_type token_type);
     do { \
         current_token.type = token_type; \
         current_token.raw_size = yyleng; \
-        current_token.raw = yyleng > 0 ? (wchar_t*)calloc(sizeof(wchar_t), yyleng) : NULL; \
+        current_token.raw = yyleng > 0 ? (wchar_t*)malloc(sizeof(wchar_t) * yyleng) : NULL; \
         if(current_token.raw == NULL) return token_type; \
         size_t size = std::mbstowcs(current_token.raw, yytext, yyleng); \
         current_token.raw = (wchar_t*)realloc(current_token.raw, sizeof(wchar_t) * size); \

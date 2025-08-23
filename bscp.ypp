@@ -426,11 +426,11 @@ WORD: lex_word {
 }
 %%
 
-void yy::parser::error(const yy::parser::location_type &loc, const std::string &msg){
+void yy::parser::error(const yy::parser::location_type &, const std::string &msg){
     fwprintf(stderr, L"%s:%d: error: %s\n", file_stack.top(), lexer->lineno(),msg.c_str());
 }
 
-int yylex(yy::parser::value_type* value, yy::parser::location_type* location) {
+int yylex(yy::parser::value_type*, yy::parser::location_type*) {
     lex_next(NULL);
     return current_token.type;
 }

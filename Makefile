@@ -1,5 +1,5 @@
 CXX ?= g++
-CXXFLAGS ?= -Wall -g
+CXXFLAGS ?= -Wall -Wpedantic -Wextra -g -std=c++20
 YACC = bison
 YACCFLAGS += -Lc++
 LEX = flex

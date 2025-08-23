@@ -482,7 +482,7 @@ int main(int argc, char *argv[]) {
     if (setlocale(LC_ALL, "") == NULL) {
         fwprintf(stderr, L"警告：无法设置 locale。宽字符输出可能不正常。\n");
     }
-    return execute_file("demo.bs"); // test
+
     struct arguments arguments;
     arguments.file = NULL;
     arguments.debug = 0;

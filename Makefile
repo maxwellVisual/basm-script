@@ -31,4 +31,8 @@ bscp: $(OBJS)
 clean:
 	rm -f $(OBJS) bscp.hpp bscp.tab.cpp libbscp.a stack.hh bscp.yy.cc bscp bscp.yy.cpp bscp.yy.hpp location.hh
 
-.PHONY: all clean
+# 测试
+test: bscp demo.bs
+	./bscp demo.bs
+
+.PHONY: all clean test

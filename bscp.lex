@@ -28,10 +28,7 @@ void set_token(yy::parser::token_kind_type token_type);
 #define CHAR_TOKEN()            SET_TOKEN(yy::parser::token_kind_type::lex_char)
 #define DECIMAL_TOKEN()         SET_TOKEN(yy::parser::token_kind_type::lex_decimal)
 #define STRING_TOKEN()          SET_TOKEN(yy::parser::token_kind_type::lex_string) 
-#define PUNCTUATION_TOKEN()     SET_TOKEN(yy::parser::token_kind_type::lex_punctuation)
-#define EOL_TOKEN()             SET_TOKEN(yy::parser::token_kind_type::lex_eol)
-#define ASSEMBLY_TOKEN()        SET_TOKEN(yy::parser::token_kind_type::lex_assembly)
-#define UNKNOWN_TOKEN()         SET_TOKEN(yy::parser::token_kind_type::lex_unknown)
+#define UNKNOWN_TOKEN()         SET_TOKEN(yy::parser::token_kind_type::lex_unknown) 
 
 /* EOF的特殊处理 */
 #define EOF_TOKEN() \
@@ -70,7 +67,6 @@ FMT_CHAR    (\\\')|(\\\")|(\\\?)|(\\\\)|(\\a)|(\\b)|(\\f)|(\\n)|(\\r)|(\\t)|(\\v
 
 %%
  /* ======= 规则部分 ======= */
- /* ^#  { PUNCTUATION_TOKEN(); BEGIN(PREPROC);  } */
  /* 这个好像不会和比较运算冲突，因为比较运算中间一定有逻辑运算符 */
 \<[a-zA-Z0-9/\.]+\>  { STRING_TOKEN(); }
 

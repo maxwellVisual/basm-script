@@ -365,7 +365,7 @@ namespace bscp::script
             if(obj->static_fields.size() > 0){
                 for(auto [name, field]: obj->static_fields){
                     wprintln_indent(indent + 1);
-                    wprintf(L".%s = ", name.c_str());
+                    wprintf(L".%ls = ", name.c_str());
                     call_debug(field, indent + 1);
                     wprintf(L",");
                 }

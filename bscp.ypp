@@ -459,7 +459,7 @@ WORD: lex_word {
 %%
 
 void yy::parser::error(const yy::parser::location_type &, const std::string &msg){
-    fwprintf(stderr, L"%s:%d: error: %s\n", file_stack.top(), lexer->lineno(),msg.c_str());
+    fprintf(stderr, "%s:%d: error: %s\n", file_stack.top(), lexer->lineno(),msg.c_str());
 }
 
 int yylex(yy::parser::value_type*, yy::parser::location_type*) {

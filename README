@@ -19,3 +19,18 @@
 | string | list<v> | "hello" -> \[104,101,108,108,111\] -> {.0=104;.1=101;.2=108;.3=108;.4=111;} |
 | char | unicode num | 'a' = 97 |
 | function | object w/out attributes | {printf();return 0;}
+# Development
+## Notice
+### char width (char vs. wchar_t)
+| domain | type | reason |
+| -- | -- | -- |
+| stdout | wchar_t | unicode compatibility |
+| stderr | char | debug simplicity |
+| stdin | char | flex lexer compatibility |
+| bscp::script | wchar_t | unicode compatibility |
+| yy::parser | wchar_t | unicode compatibility |
+| FlexLexer & yyFlexLexer | char | not supported by flex |
+| args & main | char | standard c++ compatibility |
+
+**rules**
+- **don't** mix different char types!

@@ -335,8 +335,13 @@ std::shared_ptr<num> format_chr_const(const std::wstring &str){
 }
 std::shared_ptr<value> call_print(std::shared_ptr<value> &msg_val, std::wostream& wout){
     escape_stream<wchar_t> s;
-    std::shared_ptr<obj> msg_obj = std::dynamic_pointer_cast<obj>(msg_val);
 
+    if(auto num = std::dynamic_pointer_cast<bscp::script::num>(msg_val)){
+        wout<<num->value;
+        return std::shared_ptr<value>(new null());
+    }
+
+    std::shared_ptr<obj> msg_obj = std::dynamic_pointer_cast<obj>(msg_val);
     if(!msg_obj){
         return std::shared_ptr<value>(new num(nullptr, 0));
     }

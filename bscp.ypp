@@ -187,14 +187,11 @@ expr
     }
     | "(" expr ")" { $$ = $2; }
     | expr "." expr {
-        require_true(std::dynamic_pointer_cast<bscp::script::obj>(*$1), "Left operand of '.' must be an object");
         $$ = new std::shared_ptr<bscp::script::value>(new bscp::script::oper(bscp::script::oper::OP_DOT, {*$1, *$3}));
         delete $1;
         delete $3;
     }
     | expr "[" expr "]" {
-        require_true(std::dynamic_pointer_cast<bscp::script::obj>(*$1), "Left operand of '[]' must be an object");
-        require_true(std::dynamic_pointer_cast<bscp::script::num>(*$3), "Index must be a number");
         $$ = new std::shared_ptr<bscp::script::value>(new bscp::script::oper(bscp::script::oper::OP_INDEX, {*$1, *$3}));
         delete $1;
         delete $3;
@@ -235,184 +232,133 @@ expr
         delete $3;
     }
     | "+" expr %prec POSITATE { 
-        require_true(std::dynamic_pointer_cast<bscp::script::num>(*$2), "Operand of '+' must be a number");
         $$ = new std::shared_ptr<bscp::script::value>(new bscp::script::oper(bscp::script::oper::OP_UNARY_PLUS, {*$2}));
         delete $2;
     }
     | "-" expr %prec NEGATE { 
-        require_true(std::dynamic_pointer_cast<bscp::script::num>(*$2), "Operand of '-' must be a number");
         $$ = new std::shared_ptr<bscp::script::value>(new bscp::script::oper(bscp::script::oper::OP_UNARY_MINUS, {*$2}));
         delete $2;
     }
     | "~" expr { 
-        require_true(std::dynamic_pointer_cast<bscp::script::num>(*$2), "Operand of '~' must be a number");
         $$ = new std::shared_ptr<bscp::script::value>(new bscp::script::oper(bscp::script::oper::OP_BITWISE_NOT, {*$2}));
         delete $2;
     }
     | expr "*" expr { 
-        require_true(std::dynamic_pointer_cast<bscp::script::num>(*$1) && std::dynamic_pointer_cast<bscp::script::num>(*$3), 
-                   "Operands of '*' must be numbers");
         $$ = new std::shared_ptr<bscp::script::value>(new bscp::script::oper(bscp::script::oper::OP_MULTIPLY, {*$1, *$3}));
         delete $1;
         delete $3;
     }
     | expr "/" expr { 
-        require_true(std::dynamic_pointer_cast<bscp::script::num>(*$1) && std::dynamic_pointer_cast<bscp::script::num>(*$3), 
-                   "Operands of '/' must be numbers");
         $$ = new std::shared_ptr<bscp::script::value>(new bscp::script::oper(bscp::script::oper::OP_DIVIDE, {*$1, *$3}));
         delete $1;
         delete $3;
     }
     | expr "%" expr { 
-        require_true(std::dynamic_pointer_cast<bscp::script::num>(*$1) && std::dynamic_pointer_cast<bscp::script::num>(*$3), 
-                   "Operands of '%%' must be numbers");
         $$ = new std::shared_ptr<bscp::script::value>(new bscp::script::oper(bscp::script::oper::OP_MODULO, {*$1, *$3}));
         delete $1;
         delete $3;
     }
-    | expr "+" expr { 
-        require_true(std::dynamic_pointer_cast<bscp::script::num>(*$1) && std::dynamic_pointer_cast<bscp::script::num>(*$3), 
-                   "Operands of '+' must be numbers");
+    | expr "+" expr {
         $$ = new std::shared_ptr<bscp::script::value>(new bscp::script::oper(bscp::script::oper::OP_PLUS, {*$1, *$3}));
         delete $1;
         delete $3;
     }
     | expr "-" expr { 
-        require_true(std::dynamic_pointer_cast<bscp::script::num>(*$1) && std::dynamic_pointer_cast<bscp::script::num>(*$3), 
-                   "Operands of '-' must be numbers");
         $$ = new std::shared_ptr<bscp::script::value>(new bscp::script::oper(bscp::script::oper::OP_MINUS, {*$1, *$3}));
         delete $1;
         delete $3;
     }
     | expr "<" expr { 
-        require_true(std::dynamic_pointer_cast<bscp::script::num>(*$1) && std::dynamic_pointer_cast<bscp::script::num>(*$3), 
-                   "Operands of '<' must be numbers");
         $$ = new std::shared_ptr<bscp::script::value>(new bscp::script::oper(bscp::script::oper::OP_LESS_THAN, {*$1, *$3}));
         delete $1;
         delete $3;
     }
     | expr "<=" expr { 
-        require_true(std::dynamic_pointer_cast<bscp::script::num>(*$1) && std::dynamic_pointer_cast<bscp::script::num>(*$3), 
-                   "Operands of '<=' must be numbers");
         $$ = new std::shared_ptr<bscp::script::value>(new bscp::script::oper(bscp::script::oper::OP_LESS_THAN_OR_EQUAL, {*$1, *$3}));
         delete $1;
         delete $3;
     }
     | expr ">" expr { 
-        require_true(std::dynamic_pointer_cast<bscp::script::num>(*$1) && std::dynamic_pointer_cast<bscp::script::num>(*$3), 
-                   "Operands of '>' must be numbers");
         $$ = new std::shared_ptr<bscp::script::value>(new bscp::script::oper(bscp::script::oper::OP_GREATER_THAN, {*$1, *$3}));
         delete $1;
         delete $3;
     }
     | expr ">=" expr { 
-        require_true(std::dynamic_pointer_cast<bscp::script::num>(*$1) && std::dynamic_pointer_cast<bscp::script::num>(*$3), 
-                   "Operands of '>=' must be numbers");
         $$ = new std::shared_ptr<bscp::script::value>(new bscp::script::oper(bscp::script::oper::OP_GREATER_THAN_OR_EQUAL, {*$1, *$3}));
         delete $1;
         delete $3;
     }
     | expr "<<" expr { 
-        require_true(std::dynamic_pointer_cast<bscp::script::num>(*$1) && std::dynamic_pointer_cast<bscp::script::num>(*$3), 
-                   "Operands of '>=' must be numbers");
         $$ = new std::shared_ptr<bscp::script::value>(new bscp::script::oper(bscp::script::oper::OP_SHIFT_LEFT, {*$1, *$3}));
         delete $1;
         delete $3;
     }
     | expr ">>" expr { 
-        require_true(std::dynamic_pointer_cast<bscp::script::num>(*$1) && std::dynamic_pointer_cast<bscp::script::num>(*$3), 
-                   "Operands of '>=' must be numbers");
         $$ = new std::shared_ptr<bscp::script::value>(new bscp::script::oper(bscp::script::oper::OP_SHIFT_RIGHT, {*$1, *$3}));
         delete $1;
         delete $3;
     }
     | expr "&" expr { 
-        require_true(std::dynamic_pointer_cast<bscp::script::num>(*$1) && std::dynamic_pointer_cast<bscp::script::num>(*$3), 
-                   "Operands of '&' must be numbers");
         $$ = new std::shared_ptr<bscp::script::value>(new bscp::script::oper(bscp::script::oper::OP_BITWISE_AND, {*$1, *$3}));
         delete $1;
         delete $3;
     }
     | expr "|" expr { 
-        require_true(std::dynamic_pointer_cast<bscp::script::num>(*$1) && std::dynamic_pointer_cast<bscp::script::num>(*$3), 
-                   "Operands of '|' must be numbers");
         $$ = new std::shared_ptr<bscp::script::value>(new bscp::script::oper(bscp::script::oper::OP_BITWISE_OR, {*$1, *$3}));
         delete $1;
         delete $3;
     }
     | expr "^" expr { 
-        require_true(std::dynamic_pointer_cast<bscp::script::num>(*$1) && std::dynamic_pointer_cast<bscp::script::num>(*$3), 
-                   "Operands of '^' must be numbers");
         $$ = new std::shared_ptr<bscp::script::value>(new bscp::script::oper(bscp::script::oper::OP_BITWISE_XOR, {*$1, *$3}));
         delete $1;
         delete $3;
     }
     | expr "+=" expr {
-        require_true(std::dynamic_pointer_cast<bscp::script::num>(*$1) && std::dynamic_pointer_cast<bscp::script::num>(*$3), 
-                   "Operands of '+=' must be numbers");
         $$ = new std::shared_ptr<bscp::script::value>(new bscp::script::oper(bscp::script::oper::OP_ADD_ASSIGN, {*$1, *$3}));
         delete $1;
         delete $3;
     }
     | expr "-=" expr {
-        require_true(std::dynamic_pointer_cast<bscp::script::num>(*$1) && std::dynamic_pointer_cast<bscp::script::num>(*$3), 
-                   "Operands of '-=' must be numbers");
         $$ = new std::shared_ptr<bscp::script::value>(new bscp::script::oper(bscp::script::oper::OP_SUBTRACT_ASSIGN, {*$1, *$3}));
         delete $1;
         delete $3;
     }
     | expr "*=" expr {
-        require_true(std::dynamic_pointer_cast<bscp::script::num>(*$1) && std::dynamic_pointer_cast<bscp::script::num>(*$3), 
-                   "Operands of '*=' must be numbers");
         $$ = new std::shared_ptr<bscp::script::value>(new bscp::script::oper(bscp::script::oper::OP_MULTIPLY_ASSIGN, {*$1, *$3}));
         delete $1;
         delete $3;
     }
     | expr "/=" expr {
-        require_true(std::dynamic_pointer_cast<bscp::script::num>(*$1) && std::dynamic_pointer_cast<bscp::script::num>(*$3), 
-                   "Operands of '/=' must be numbers");
         $$ = new std::shared_ptr<bscp::script::value>(new bscp::script::oper(bscp::script::oper::OP_DIVIDE_ASSIGN, {*$1, *$3}));
         delete $1;
         delete $3;
     }
     | expr "%=" expr {
-        require_true(std::dynamic_pointer_cast<bscp::script::num>(*$1) && std::dynamic_pointer_cast<bscp::script::num>(*$3), 
-                   "Operands of '%%=' must be numbers");
         $$ = new std::shared_ptr<bscp::script::value>(new bscp::script::oper(bscp::script::oper::OP_MODULO_ASSIGN, {*$1, *$3}));
         delete $1;
         delete $3;
     }
     | expr "<<=" expr {
-        require_true(std::dynamic_pointer_cast<bscp::script::num>(*$1) && std::dynamic_pointer_cast<bscp::script::num>(*$3), 
-                   "Operands of '<<=' must be numbers");
         $$ = new std::shared_ptr<bscp::script::value>(new bscp::script::oper(bscp::script::oper::OP_SHIFT_LEFT_ASSIGN, {*$1, *$3}));
         delete $1;
         delete $3;
     }
     | expr ">>=" expr {
-        require_true(std::dynamic_pointer_cast<bscp::script::num>(*$1) && std::dynamic_pointer_cast<bscp::script::num>(*$3), 
-                   "Operands of '>>=' must be numbers");
         $$ = new std::shared_ptr<bscp::script::value>(new bscp::script::oper(bscp::script::oper::OP_SHIFT_RIGHT_ASSIGN, {*$1, *$3}));
         delete $1;
         delete $3;
     }
     | expr "&=" expr {
-        require_true(std::dynamic_pointer_cast<bscp::script::num>(*$1) && std::dynamic_pointer_cast<bscp::script::num>(*$3),
-                   "Operands of '&=' must be numbers");
         $$ = new std::shared_ptr<bscp::script::value>(new bscp::script::oper(bscp::script::oper::OP_BITWISE_AND_ASSIGN, {*$1, *$3}));
         delete $1;
         delete $3;
     }
     | expr "|=" expr {
-        require_true(std::dynamic_pointer_cast<bscp::script::num>(*$1) && std::dynamic_pointer_cast<bscp::script::num>(*$3),
-                   "Operands of '|=' must be numbers");
         $$ = new std::shared_ptr<bscp::script::value>(new bscp::script::oper(bscp::script::oper::OP_BITWISE_OR_ASSIGN, {*$1, *$3}));
         delete $1;
         delete $3;
     }
     | expr "^=" expr {
-        require_true(std::dynamic_pointer_cast<bscp::script::num>(*$1) && std::dynamic_pointer_cast<bscp::script::num>(*$3),
-                   "Operands of '^=' must be numbers");
         $$ = new std::shared_ptr<bscp::script::value>(new bscp::script::oper(bscp::script::oper::OP_BITWISE_XOR_ASSIGN, {*$1, *$3}));
         delete $1;
         delete $3;

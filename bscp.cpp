@@ -27,7 +27,7 @@ namespace bscp::script
     };
     static std::shared_ptr<value> calc(std::shared_ptr<value>& val, std::shared_ptr<obj> &parent, std::stack<stack_frame> &stack);
     
-    int call_debug(std::shared_ptr<value>& value, size_t indent = 0);
+    static int call_debug(std::shared_ptr<value>& value, size_t indent = 0);
 
     bool value2bool(std::shared_ptr<value>& value) {
         if (std::dynamic_pointer_cast<num>(value)) {
@@ -103,17 +103,19 @@ namespace bscp::script
         switch (oper->op) {
             case oper::OP_INDEX:
             {
-                std::shared_ptr<obj> obj = std::dynamic_pointer_cast<bscp::script::obj>(oper->operands[0]);
+                std::shared_ptr<obj> obj = std::dynamic_pointer_cast<bscp::script::obj>(calc(oper->operands[0], parent, stack));
                 if(!obj){
                     return std::shared_ptr<value>(new null());
                 }
-                if(auto num = std::dynamic_pointer_cast<bscp::script::num>(oper->operands[1])){
+                std::shared_ptr<value> arg1 = calc(oper->operands[1], parent, stack);
+
+                if(auto num = std::dynamic_pointer_cast<bscp::script::num>(arg1)){
                     auto node = obj->static_fields.find(std::to_wstring((unsigned long long int)num->value));
                     if(node == obj->static_fields.end()){
                         goto err_null;
                     }
                     return node->second;
-                }else if(std::dynamic_pointer_cast<bscp::script::obj>(oper->operands[1])){
+                }else if(std::dynamic_pointer_cast<bscp::script::obj>(arg1)){
                     // capture wstring
                     std::wstringstream ind;
                     std::wstring wstr;
@@ -132,9 +134,33 @@ namespace bscp::script
                 }
             }
             case oper::OP_PLUS:
-                return std::shared_ptr<value>(new num(oper->parent, static_cast<num*>(oper->operands[0].get())->value + static_cast<num*>(oper->operands[1].get())->value));
+            {
+                auto a = std::dynamic_pointer_cast<num>(calc(oper->operands[0], parent, stack));
+                auto b = std::dynamic_pointer_cast<num>(calc(oper->operands[1], parent, stack));
+                if(!a) {
+                    std::cerr<<"a must be a numeric expression"<<std::endl;
+                    goto err_null;
+                }
+                if(!b) {
+                    std::cerr<<"b must be a numeric expression"<<std::endl;
+                    goto err_null;
+                }
+                return std::shared_ptr<value>(new num(oper->parent, a->value + b->value));
+            }
             case oper::OP_MINUS:
-                return std::shared_ptr<value>(new num(oper->parent, static_cast<num*>(oper->operands[0].get())->value - static_cast<num*>(oper->operands[1].get())->value));
+            {
+                auto a = std::dynamic_pointer_cast<num>(calc(oper->operands[0], parent, stack));
+                auto b = std::dynamic_pointer_cast<num>(calc(oper->operands[1], parent, stack));
+                if(!a) {
+                    std::cerr<<"a must be a numeric expression"<<std::endl;
+                    goto err_null;
+                }
+                if(!b) {
+                    std::cerr<<"b must be a numeric expression"<<std::endl;
+                    goto err_null;
+                }
+                return std::shared_ptr<value>(new num(oper->parent, a->value - b->value));
+            }
             case oper::OP_MULTIPLY:
                 return std::shared_ptr<value>(new num(oper->parent, static_cast<num*>(oper->operands[0].get())->value * static_cast<num*>(oper->operands[1].get())->value));
             case oper::OP_DIVIDE:
@@ -262,12 +288,12 @@ namespace bscp::script
                 std::shared_ptr<bscp::script::field> field = std::dynamic_pointer_cast<bscp::script::field>(oper->operands[0]);
                 if(__glibc_unlikely(field != nullptr)){
                     if(field->name == L"print"){
-                        std::shared_ptr<bscp::script::value> msg = calc(oper->operands[1], parent, stack);
+                        std::shared_ptr<value> msg = calc(oper->operands[1], parent, stack);
                         return call_print(msg, std::wcout);
                     }
                     if(field->name == L"debug"){
-                        std::shared_ptr<bscp::script::value> msg = calc(oper->operands[1], parent, stack);
-                        return std::static_pointer_cast<value>(std::make_shared<num>(nullptr, call_debug(msg)));
+                        std::shared_ptr<value> msg = calc(oper->operands[1], parent, stack);
+                        return std::static_pointer_cast<value>(std::make_shared<num>(nullptr, call_debug(msg, 0)));
                     }
                 }
 
@@ -301,14 +327,17 @@ namespace bscp::script
     err_null:
         return std::shared_ptr<value>(new null());
     }
-    static void println_indent(size_t indent = 0){
+    static void wprintln_indent(size_t indent = 0){
         wprintf(L"\n");
         for (size_t i = 0; i < indent; i++)
         {
-            wprintf(L"+---");
+            wprintf(L"+   ");
         }
     }
-    int call_debug(std::shared_ptr<value> &value, size_t indent){
+    int call_debug(std::shared_ptr<value> &value){
+        return call_debug(value, 0);
+    }
+    static int call_debug(std::shared_ptr<value> &value, size_t indent){
         if(std::dynamic_pointer_cast<num>(value)){
             wprintf(L"%Lf", std::static_pointer_cast<num>(value)->value);
             return 0;
@@ -316,9 +345,13 @@ namespace bscp::script
         if(std::dynamic_pointer_cast<oper>(value)){
             std::shared_ptr<oper> oper = std::static_pointer_cast<bscp::script::oper>(value);
             wprintf(L"OPER(%d)[", oper->op);
-            for(auto arg : oper->operands){
-                call_debug(arg, indent + 1);
-                wprintf(L", ");
+            if(oper->operands.size() > 0){
+                for(auto arg : oper->operands){
+                    wprintln_indent(indent + 1);
+                    call_debug(arg, indent + 1);
+                    wprintf(L",");
+                }
+                wprintln_indent(indent);
             }
             wprintf(L"]");
             return 0;
@@ -329,19 +362,23 @@ namespace bscp::script
         }
         if(std::shared_ptr<obj> obj = std::dynamic_pointer_cast<bscp::script::obj>(value)){
             wprintf(L"OBJ[");
-            for(auto [name, field]: obj->static_fields){
-                wprintf(L"%s: ", name.c_str());
-                call_debug(field, indent + 1);
-                wprintf(L", ");
+            if(obj->static_fields.size() > 0){
+                for(auto [name, field]: obj->static_fields){
+                    wprintln_indent(indent + 1);
+                    wprintf(L".%s = ", name.c_str());
+                    call_debug(field, indent + 1);
+                    wprintf(L",");
+                }
+                wprintln_indent(indent);
             }
             wprintf(L"]{");
             if(obj->lines.size() > 0){
-                println_indent(indent);
                 for(auto i=obj->lines.begin(); i+1 != obj->lines.end(); i++){
+                    wprintln_indent(indent + 1);
                     call_debug(*i, indent + 1);
                     wprintf(L";");
-                    println_indent(indent);
                 }
+                wprintln_indent(indent + 1);
                 call_debug(obj->lines.back(), indent + 1);
             }
             wprintf(L"}");

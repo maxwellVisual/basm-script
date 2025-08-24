@@ -2,6 +2,7 @@
 #define __LEX_H__
 
 #include <cstddef>
+#include <cstdlib>
 #include <stack>
 
 extern size_t line_count;
@@ -17,6 +18,15 @@ struct lex_token {
     int type;
     size_t raw_size;
     wchar_t* raw;
+    
+    void clear(){
+        if(__glibc_likely(raw != nullptr)){
+            type = 0;
+            raw_size = 0;
+            free(raw);
+            raw = nullptr;
+        }
+    }
 };
 
 /* 全局变量声明 */

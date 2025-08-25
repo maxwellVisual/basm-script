@@ -23,16 +23,16 @@ class obj;
 class value
 {
 public:
-    std::shared_ptr<obj> parent;
+    std::weak_ptr<obj> parent;
     virtual ~value() {} // Needed for dynamic_cast
 protected:
-    value(std::shared_ptr<obj> parent): parent(parent){}
+    value(std::weak_ptr<obj> parent = std::weak_ptr<obj>()): parent(parent){}
 };
 
 class null: public value
 {
 public:
-    null(std::shared_ptr<obj> parent = nullptr): value(parent){}
+    null(std::weak_ptr<obj> parent = std::weak_ptr<obj>()): value(parent){}
 };
 class num: public value
 {
@@ -40,13 +40,13 @@ public:
     long double value;
 
     // positive value only
-    num(std::shared_ptr<obj> parent, std::wstring& raw)
+    num(std::wstring& raw, std::weak_ptr<obj> parent = std::weak_ptr<obj>())
         : bscp::script::value(parent), value(std::wcstold(raw.c_str(), nullptr)){}
 
-    num(std::shared_ptr<obj> parent, long double value)
+    num(long double value, std::weak_ptr<obj> parent = std::weak_ptr<obj>())
         : bscp::script::value(parent), value(value){}
 
-    num(std::shared_ptr<obj> parent)
+    num(std::weak_ptr<obj> parent)
         : bscp::script::value(parent), value(0){}
 };
 
@@ -56,9 +56,9 @@ public:
     std::vector<std::shared_ptr<value>> values;
 
     list(std::initializer_list<std::shared_ptr<value>> values)
-        : value(nullptr), values(values){}
+        : value(), values(values){}
     list(std::vector<std::shared_ptr<value>> values)
-        : value(nullptr), values(values){}
+        : value(), values(values){}
 };
 
 class oper: public value
@@ -113,9 +113,9 @@ public:
     std::vector<std::shared_ptr<value>> operands;
 
     oper(operation_type op, std::initializer_list<std::shared_ptr<value>> operands)
-        : value(nullptr), op(op), operands(operands) {}
+        : value(), op(op), operands(operands) {}
     oper(operation_type op, std::shared_ptr<list>& operands)
-        : value(nullptr), op(op), operands(operands->values){}
+        : value(), op(op), operands(operands->values){}
 };
 
 

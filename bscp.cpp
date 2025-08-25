@@ -145,7 +145,7 @@ namespace bscp::script
                     std::cerr<<"b must be a numeric expression"<<std::endl;
                     goto err_null;
                 }
-                return std::shared_ptr<value>(new num(oper->parent, a->value + b->value));
+                return std::shared_ptr<value>(new num(a->value + b->value));
             }
             case oper::OP_MINUS:
             {
@@ -159,52 +159,52 @@ namespace bscp::script
                     std::cerr<<"b must be a numeric expression"<<std::endl;
                     goto err_null;
                 }
-                return std::shared_ptr<value>(new num(oper->parent, a->value - b->value));
+                return std::shared_ptr<value>(new num(a->value - b->value, oper->parent));
             }
             case oper::OP_MULTIPLY:
-                return std::shared_ptr<value>(new num(oper->parent, static_cast<num*>(oper->operands[0].get())->value * static_cast<num*>(oper->operands[1].get())->value));
+                return std::shared_ptr<value>(new num(static_cast<num*>(oper->operands[0].get())->value * static_cast<num*>(oper->operands[1].get())->value, oper->parent));
             case oper::OP_DIVIDE:
-                return std::shared_ptr<value>(new num(oper->parent, static_cast<num*>(oper->operands[0].get())->value / static_cast<num*>(oper->operands[1].get())->value));
+                return std::shared_ptr<value>(new num(static_cast<num*>(oper->operands[0].get())->value / static_cast<num*>(oper->operands[1].get())->value, oper->parent));
             case oper::OP_MODULO:
-                return std::shared_ptr<value>(new num(oper->parent, modfl(static_cast<num*>(oper->operands[0].get())->value, &static_cast<num*>(oper->operands[1].get())->value)));
+                return std::shared_ptr<value>(new num(modfl(static_cast<num*>(oper->operands[0].get())->value, &static_cast<num*>(oper->operands[1].get())->value), oper->parent));
             case oper::OP_SHIFT_LEFT:
-                return std::shared_ptr<value>(new num(oper->parent, static_cast<long long>(static_cast<num*>(oper->operands[0].get())->value) << static_cast<long long>(static_cast<num*>(oper->operands[1].get())->value)));
+                return std::shared_ptr<value>(new num(static_cast<long long>(static_cast<num*>(oper->operands[0].get())->value) << static_cast<long long>(static_cast<num*>(oper->operands[1].get())->value), oper->parent));
             case oper::OP_SHIFT_RIGHT:
-                return std::shared_ptr<value>(new num(oper->parent, static_cast<long long>(static_cast<num*>(oper->operands[0].get())->value) >> static_cast<long long>(static_cast<num*>(oper->operands[1].get())->value)));
+                return std::shared_ptr<value>(new num(static_cast<long long>(static_cast<num*>(oper->operands[0].get())->value) >> static_cast<long long>(static_cast<num*>(oper->operands[1].get())->value), oper->parent));
             case oper::OP_BITWISE_AND:
-                return std::shared_ptr<value>(new num(oper->parent, static_cast<long long>(static_cast<num*>(oper->operands[0].get())->value) & static_cast<long long>(static_cast<num*>(oper->operands[1].get())->value)));
+                return std::shared_ptr<value>(new num(static_cast<long long>(static_cast<num*>(oper->operands[0].get())->value) & static_cast<long long>(static_cast<num*>(oper->operands[1].get())->value), oper->parent));
             case oper::OP_BITWISE_OR:
-                return std::shared_ptr<value>(new num(oper->parent, static_cast<long long>(static_cast<num*>(oper->operands[0].get())->value) | static_cast<long long>(static_cast<num*>(oper->operands[1].get())->value)));
+                return std::shared_ptr<value>(new num(static_cast<long long>(static_cast<num*>(oper->operands[0].get())->value) | static_cast<long long>(static_cast<num*>(oper->operands[1].get())->value), oper->parent));
             case oper::OP_BITWISE_XOR:
-                return std::shared_ptr<value>(new num(oper->parent, static_cast<long long>(static_cast<num*>(oper->operands[0].get())->value) ^ static_cast<long long>(static_cast<num*>(oper->operands[1].get())->value)));
+                return std::shared_ptr<value>(new num(static_cast<long long>(static_cast<num*>(oper->operands[0].get())->value) ^ static_cast<long long>(static_cast<num*>(oper->operands[1].get())->value), oper->parent));
             case oper::OP_LOGICAL_AND:
-                return std::shared_ptr<value>(new num(oper->parent, bscp::script::value2bool(oper->operands[0]) && bscp::script::value2bool(oper->operands[1])));
+                return std::shared_ptr<value>(new num(bscp::script::value2bool(oper->operands[0]) && bscp::script::value2bool(oper->operands[1]), oper->parent));
             case oper::OP_LOGICAL_OR:
-                return std::shared_ptr<value>(new num(oper->parent, bscp::script::value2bool(oper->operands[0]) || bscp::script::value2bool(oper->operands[1])));
+                return std::shared_ptr<value>(new num(bscp::script::value2bool(oper->operands[0]) || bscp::script::value2bool(oper->operands[1]), oper->parent));
             case oper::OP_LESS_THAN:
-                return std::shared_ptr<value>(new num(oper->parent, static_cast<num*>(oper->operands[0].get())->value < static_cast<num*>(oper->operands[1].get())->value));
+                return std::shared_ptr<value>(new num(static_cast<num*>(oper->operands[0].get())->value < static_cast<num*>(oper->operands[1].get())->value, oper->parent));
             case oper::OP_LESS_THAN_OR_EQUAL:
-                return std::shared_ptr<value>(new num(oper->parent, static_cast<num*>(oper->operands[0].get())->value <= static_cast<num*>(oper->operands[1].get())->value));
+                return std::shared_ptr<value>(new num(static_cast<num*>(oper->operands[0].get())->value <= static_cast<num*>(oper->operands[1].get())->value, oper->parent));
             case oper::OP_GREATER_THAN:
-                return std::shared_ptr<value>(new num(oper->parent, static_cast<num*>(oper->operands[0].get())->value > static_cast<num*>(oper->operands[1].get())->value));
+                return std::shared_ptr<value>(new num(static_cast<num*>(oper->operands[0].get())->value > static_cast<num*>(oper->operands[1].get())->value, oper->parent));
             case oper::OP_GREATER_THAN_OR_EQUAL:
-                return std::shared_ptr<value>(new num(oper->parent, static_cast<num*>(oper->operands[0].get())->value >= static_cast<num*>(oper->operands[1].get())->value));
+                return std::shared_ptr<value>(new num(static_cast<num*>(oper->operands[0].get())->value >= static_cast<num*>(oper->operands[1].get())->value, oper->parent));
             case oper::OP_EQUAL_TO:
-                return std::shared_ptr<value>(new num(oper->parent, static_cast<num*>(oper->operands[0].get())->value == static_cast<num*>(oper->operands[1].get())->value));
+                return std::shared_ptr<value>(new num(static_cast<num*>(oper->operands[0].get())->value == static_cast<num*>(oper->operands[1].get())->value, oper->parent));
             case oper::OP_NOT_EQUAL_TO:
-                return std::shared_ptr<value>(new num(oper->parent, static_cast<num*>(oper->operands[0].get())->value != static_cast<num*>(oper->operands[1].get())->value));
+                return std::shared_ptr<value>(new num(static_cast<num*>(oper->operands[0].get())->value != static_cast<num*>(oper->operands[1].get())->value, oper->parent));
             case oper::OP_UNARY_PLUS:
-                return std::shared_ptr<value>(new num(oper->parent, static_cast<num*>(oper->operands[0].get())->value));
+                return std::shared_ptr<value>(new num(static_cast<num*>(oper->operands[0].get())->value, oper->parent));
             case oper::OP_UNARY_MINUS:
-                return std::shared_ptr<value>(new num(oper->parent, -static_cast<num*>(oper->operands[0].get())->value));
+                return std::shared_ptr<value>(new num(-static_cast<num*>(oper->operands[0].get())->value, oper->parent));
             case oper::OP_BITWISE_NOT:
-                return std::shared_ptr<value>(new num(oper->parent, ~static_cast<long long>(static_cast<num*>(oper->operands[0].get())->value)));
+                return std::shared_ptr<value>(new num(~static_cast<long long>(static_cast<num*>(oper->operands[0].get())->value), oper->parent));
             case oper::OP_INCREMENT_GET:
                 static_cast<num*>(oper->operands[0].get())->value += 1;
-                return std::shared_ptr<value>(new num(oper->parent, static_cast<num*>(oper->operands[0].get())->value));
+                return std::shared_ptr<value>(new num(static_cast<num*>(oper->operands[0].get())->value, oper->parent));
             case oper::OP_DECREMENT_GET:
                 static_cast<num*>(oper->operands[0].get())->value -= 1;
-                return std::shared_ptr<value>(new num(oper->parent, static_cast<num*>(oper->operands[0].get())->value));
+                return std::shared_ptr<value>(new num(static_cast<num*>(oper->operands[0].get())->value, oper->parent));
             case oper::OP_ASSIGN:
             {
                 std::shared_ptr<field> field = std::dynamic_pointer_cast<bscp::script::field>(oper->operands[0]);
@@ -293,7 +293,7 @@ namespace bscp::script
                     }
                     if(field->name == L"debug"){
                         std::shared_ptr<value> msg = calc(oper->operands[1], parent, stack);
-                        return std::static_pointer_cast<value>(std::make_shared<num>(nullptr, call_debug(msg, 0)));
+                        return std::static_pointer_cast<value>(std::make_shared<num>(call_debug(msg, 0)));
                     }
                 }
 

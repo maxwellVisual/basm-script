@@ -32,5 +32,7 @@
 | FlexLexer & yyFlexLexer | char | not supported by flex |
 | args & main | char | standard c++ compatibility |
 
-**rules**
-- **don't** mix different char types!
+\***don't** mix different char types!
+### AST
+- 向下引用shared_ptr (如obj.static_values)
+- 向上（反向）引用weak_ptr (如value.parent)

@@ -323,7 +323,7 @@ std::shared_ptr<obj> format_str_const(const std::wstring &str){
     auto obj = std::make_shared<bscp::script::obj>(nullptr);
     for(size_t i = 0; i < out.length(); i++) {
         std::wstring name = std::to_wstring(i);
-        obj->static_fields.emplace(name, std::shared_ptr<bscp::script::value>(new bscp::script::num(obj, out[i])));
+        obj->static_fields.emplace(name, std::shared_ptr<bscp::script::value>(new bscp::script::num(out[i], obj)));
     }
     return std::shared_ptr<bscp::script::obj>(obj);
 }
@@ -331,7 +331,7 @@ std::shared_ptr<num> format_chr_const(const std::wstring &str){
     escape_stream<wchar_t> s(str);
     wchar_t out;
     s.get(out);
-    return std::make_shared<num>(nullptr, (long double)out);
+    return std::make_shared<num>((long double)out);
 }
 std::shared_ptr<value> call_print(std::shared_ptr<value> &msg_val, std::wostream& wout){
     escape_stream<wchar_t> s;
@@ -343,7 +343,7 @@ std::shared_ptr<value> call_print(std::shared_ptr<value> &msg_val, std::wostream
 
     std::shared_ptr<obj> msg_obj = std::dynamic_pointer_cast<obj>(msg_val);
     if(!msg_obj){
-        return std::shared_ptr<value>(new num(nullptr, 0));
+        return std::shared_ptr<value>(new num(0));
     }
     for (size_t i = 0; msg_obj->static_fields.find(std::to_wstring(i)) != msg_obj->static_fields.end(); i++){
         std::shared_ptr<bscp::script::num> num = std::dynamic_pointer_cast<bscp::script::num>((*msg_obj)[i]);

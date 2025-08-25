@@ -405,12 +405,12 @@ object: "{" expr_list "}" {
 }
 INTEGER: lex_integer {
     std::wstring raw(current_token.raw, current_token.raw_size);
-    $$ = new std::shared_ptr<bscp::script::num>(new bscp::script::num(nullptr, raw));
+    $$ = new std::shared_ptr<bscp::script::num>(new bscp::script::num(raw));
     current_token.clear();
 };
 DECIMAL: lex_decimal {
     std::wstring raw(current_token.raw, current_token.raw_size);
-    $$ = new std::shared_ptr<bscp::script::num>(new bscp::script::num(nullptr, raw));
+    $$ = new std::shared_ptr<bscp::script::num>(new bscp::script::num(raw));
     current_token.clear();
 };
 CHAR: lex_char {

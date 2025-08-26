@@ -33,6 +33,6 @@ aaa = {
     .4=97;
     .5="\n"[0]-1+1;
 };
-print(aaa[5]);
-print({.0='\n'});
+bbb = ['b',98,98,98,98,'\n'];
 print(aaa);
+print(bbb);

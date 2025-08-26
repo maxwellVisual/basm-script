@@ -394,15 +394,28 @@ expr
         delete $1;
     }
     ;
-object: "{" expr_list "}" {
-    auto obj = std::make_shared<bscp::script::obj>(nullptr);
-    for(auto i=(*$2)->values.rbegin(); i!=(*$2)->values.rend(); i++){
-        (*i)->parent = obj;
-        obj->lines.emplace_back(*i);
+object
+    : "{" expr_list "}" {
+        auto obj = std::make_shared<bscp::script::obj>(nullptr);
+        for(auto i=(*$2)->values.rbegin(); i!=(*$2)->values.rend(); i++){
+            (*i)->parent = obj;
+            obj->lines.emplace_back(*i);
+        }
+        $$ = new std::shared_ptr<bscp::script::obj>(obj);
+        delete $2;
     }
-    $$ = new std::shared_ptr<bscp::script::obj>(obj);
-    delete $2;
-}
+    | "[" arg_list "]" {
+        auto obj = std::make_shared<bscp::script::obj>(nullptr);
+        size_t j=0;
+        for(auto i=(*$2)->values.rbegin(); i!=(*$2)->values.rend(); i++){
+            (*i)->parent = obj;
+            obj->static_fields.insert_or_assign(std::to_wstring(j), *i);
+            j++;
+        }
+        $$ = new std::shared_ptr<bscp::script::obj>(obj);
+        delete $2;
+    }
+    ;
 INTEGER: lex_integer {
     std::wstring raw(current_token.raw, current_token.raw_size);
     $$ = new std::shared_ptr<bscp::script::num>(new bscp::script::num(raw));
